@@ -1,6 +1,5 @@
 import Graphics.Gloss
 
-type Size = (Float, Float)
 data Step = L | R | N deriving (Eq, Show)
 
 data Spool = Spool { point :: Point
@@ -34,18 +33,7 @@ plotter = nextPlotter Plotter { left = leftSpool
                               , marker = (0, 0)
                               , points = [] }
 
-doubleSteps = [ (L, R)
-              , (R, L)
-              , (R, R) 
-              , (N, R)
-              , (L, R)
-              , (N, R) 
-              , (R, R)
-              , (R, R)
-              , (R, R) 
-              , (L, R)
-              , (L, R)
-              , (N, R) ]
+doubleSteps = calculateSteps plotter (0, 0)
 
 nextPlotter :: Plotter -> Plotter
 nextPlotter plotter@(Plotter left' right' marker' points') = 
@@ -162,3 +150,66 @@ rotationSign :: Step -> Float
 rotationSign L = -1
 rotationSign R = 1
 rotationSign N = 0
+
+
+lengthChange :: Plotter -> Point -> (Float, Float)
+lengthChange plotter target = (newLeft - oldLeft, newRight - oldRight)
+  where
+    oldLeft = string l
+    oldRight = string r
+    newLeft = distance (point l) target
+    newRight = distance (point r) target 
+    l = left plotter
+    r = right plotter
+
+calculateSteps :: Plotter -> Point -> [(Step, Step)]
+calculateSteps plotter point = toSteps $ lengthChange plotter point
+
+toInts :: (Float, Float) -> [(Int, Int)]
+toInts (leftDelta, rightDelta) = if leftSteps > rightSteps
+  then map (\i -> (i, r i)) [1..leftSteps]
+  else map (\i -> (r i, i)) [1..rightSteps]
+  where
+    leftSteps = abs $ round $ leftDelta / pullPerStep
+    rightSteps = abs $ round $ rightDelta / pullPerStep
+    minimum = min leftSteps rightSteps
+    maximum = max leftSteps rightSteps
+    x = (fromIntegral maximum) / (fromIntegral minimum)
+    r i = round (fromIntegral i / x)
+
+intsToSteps :: (Step, Step) -> [(Int, Int)] -> [(Step, Step)]
+intsToSteps (leftStep, rightStep) ints = zip (stepify leftStep left) (stepify rightStep right)
+  where
+    left = map fst ints
+    right = map snd ints
+
+stepify :: Step -> [Int] -> [Step]
+stepify step [] = []
+stepify step (x:xs) = if x == 0
+  then (N:stepify' 0 xs)
+  else stepify' (-1) (x:xs)
+  where
+    stepify' prev [] = []
+    stepify' prev (x:xs) = (s:stepify' x xs)
+      where
+        s = if prev == x
+          then N
+          else step
+
+toSteps :: (Float, Float) -> [(Step, Step)]
+toSteps (leftDelta, rightDelta) = intsToSteps steps ints
+  where
+    steps = (leftRotation leftDelta, rightRotation rightDelta)
+    ints = toInts (leftDelta, rightDelta)
+
+leftRotation :: Float -> Step
+leftRotation 0 = N
+leftRotation lengthChange = if lengthChange > 0
+  then L
+  else R
+
+rightRotation :: Float -> Step
+rightRotation 0 = N
+rightRotation lengthChange = if lengthChange > 0
+  then R
+  else L
