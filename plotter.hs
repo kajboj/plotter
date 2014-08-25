@@ -21,17 +21,17 @@ stepPull = (degreesPerStep / 360) * spoolCircumference
 spoolRadius = 10 :: Float
 
 steps = [ (L, R)
-        , (N, L)
+        , (N, R)
+        , (R, R) 
+        , (N, R)
+        , (L, R)
+        , (N, R) 
+        , (R, R)
+        , (R, R)
         , (R, R) 
         , (L, R)
-        , (N, L)
-        , (R, R) 
         , (L, R)
-        , (N, L)
-        , (R, R) 
-        , (L, R)
-        , (N, L)
-        , (R, R) ]
+        , (N, R) ]
 
 main :: IO ()
 main 
@@ -46,7 +46,9 @@ frame timeS = Scale 1.2 1.2
              , string rightSpoolPoint marker
              , canvasPic ]
   where
-    marker = markerPoint initialLeftStringLength initialRightStringLength
+    marker = markerPoint leftStringLength rightStringLength
+    leftStringLength = stringLength initialLeftStringLength (1) (leftRots steps) (splitTime timeS)
+    rightStringLength = stringLength initialRightStringLength (-1) (rightRots steps) (splitTime timeS)
 
 spools :: Float -> Picture
 spools timeS = Pictures
@@ -62,6 +64,12 @@ spoolDegrees rots (completeSteps, current) = steps * degreesPerStep
     steps = histToSteps hist current
     hist = history rots completeSteps
 
+stringLength :: Float -> Float -> [Rot] -> (Int, Float) -> Float
+stringLength initial dir rots (completeSteps, current) =
+  initial - steps * stepPull * dir
+  where
+    steps = histToSteps hist current
+    hist = history rots completeSteps
 
 trans :: Point -> Picture -> Picture
 trans (x, y) pic = Translate x y pic
@@ -105,7 +113,7 @@ histToSteps (complete, inProgress) remainder =
   where
     fractional = case inProgress of
       Nothing -> 0
-      Just rot -> remainder * (direction rot)
+      Just rot -> remainder * (rotationDirection rot)
 
 markerPoint :: Float -> Float -> Point
 markerPoint left right =
@@ -134,10 +142,10 @@ string (spoolX, spoolY) end = Color (greyN 0.4) (line [start, end])
   where
     start = (spoolX, spoolY - spoolRadius)
 
-direction :: Rot -> Float
-direction L = -1
-direction R = 1
-direction N = 0
+rotationDirection :: Rot -> Float
+rotationDirection L = -1
+rotationDirection R = 1
+rotationDirection N = 0
 
 leftRots :: [Step] -> [Rot]
 leftRots = map fst
