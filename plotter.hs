@@ -1,37 +1,97 @@
 import Graphics.Gloss
 
 type Size = (Float, Float)
-data Rot = L | R | N deriving (Eq, Show)
-type Step = (Rot, Rot)
-type History = ([Rot], Maybe Rot)
+data Step = L | R | N deriving (Eq, Show)
 
-leftSpoolPoint = (-250, 200)
-rightSpoolPoint = (250, 200)
+data Spool = Spool { point :: Point
+                   , string :: Float
+                   , angle :: Float
+                   , steps :: [Step]
+                   , pullSign :: Float
+                   } deriving (Show)
 
-initialLeftStringLength = 400
-initialRightStringLength = 300
+data Plotter = Plotter { left :: Spool  
+                       , right :: Spool  
+                       , marker :: Point
+                       , points :: [Point]
+                       } deriving (Show)  
+
+leftSpool = Spool { point = (-250, 200)
+                  , string = 400
+                  , angle = 0
+                  , steps = map fst doubleSteps
+                  , pullSign = -1}
+
+rightSpool = Spool { point = (250, 200)
+                   , string = 300
+                   , angle = 0
+                   , steps = map snd doubleSteps
+                   , pullSign = 1}
+
+plotter = Plotter { left = leftSpool
+                  , right = rightSpool
+                  , marker = intersectCircles (point leftSpool)
+                                              (string leftSpool)
+                                              (point rightSpool)
+                                              (string rightSpool)
+                  , points = [] }
+
+doubleSteps = [ (L, R)
+              , (R, L)
+              , (R, R) 
+              , (N, R)
+              , (L, R)
+              , (N, R) 
+              , (R, R)
+              , (R, R)
+              , (R, R) 
+              , (L, R)
+              , (L, R)
+              , (N, R) ]
+
+nextPlotter :: Plotter -> Plotter
+nextPlotter plotter@(Plotter left' right' marker' points') = 
+  Plotter { left = newLeft
+          , right = newRight
+          , marker = intersectCircles (point newLeft)
+                                      (string newLeft)
+                                      (point newRight)
+                                      (string newRight)
+          , points = points' }
+  where
+    newLeft = nextSpool left'
+    newRight = nextSpool right'
+
+transformPlotter :: Float -> Plotter -> Plotter
+transformPlotter time plotter = transformPlotter' plotter completeStepCount
+  where
+    transformPlotter' plotter 0 = plotter
+    transformPlotter' plotter n = transformPlotter' (nextPlotter plotter) (n-1)
+    (completeStepCount, _) = splitTime time
+
+nextSpool :: Spool -> Spool
+nextSpool spool@(Spool { point = _
+                       , string = _
+                       , angle = _
+                       , steps = []
+                       , pullSign = _}) = spool
+
+nextSpool spool@(Spool point' string' angle' steps' pullSign') =
+  Spool { point = point'
+        , string = string' + pullPerStep * pullSign' * rotSign
+        , angle = angle' + degreesPerStep * rotSign
+        , steps = tail steps'
+        , pullSign = pullSign' }
+  where
+    step = head steps'
+    rotSign = rotationSign step
 
 canvasSize = (300, 200)
-
 timePerStep = 1 :: Float
 degreesPerStep = 45 :: Float
 spoolCircumference = 2 * pi * spoolRadius
-stepPull = (degreesPerStep / 360) * spoolCircumference
-
+pullPerStep = (degreesPerStep / 360) * spoolCircumference
 spoolRadius = 10 :: Float
-
-steps = [ (L, R)
-        , (N, R)
-        , (R, R) 
-        , (N, R)
-        , (L, R)
-        , (N, R) 
-        , (R, R)
-        , (R, R)
-        , (R, R) 
-        , (L, R)
-        , (L, R)
-        , (N, R) ]
 
 main :: IO ()
 main 
@@ -41,64 +101,34 @@ main
 
 frame :: Float -> Picture
 frame timeS = Scale 1.2 1.2
-  $ Pictures [ spools timeS
-             , string leftSpoolPoint marker
-             , string rightSpoolPoint marker
-             , canvasPic ]
-  where
-    marker = markerPoint leftStringLength rightStringLength
-    leftStringLength = stringLength initialLeftStringLength (1) (leftRots steps) (splitTime timeS)
-    rightStringLength = stringLength initialRightStringLength (-1) (rightRots steps) (splitTime timeS)
+  $ plotterPic (transformPlotter timeS plotter)
 
-spools :: Float -> Picture
-spools timeS = Pictures
-  [ trans leftSpoolPoint (Rotate degreesLeft spoolPic)
-  , trans rightSpoolPoint (Rotate degreesRight spoolPic) ]
-  where
-    degreesLeft = spoolDegrees (leftRots steps) (splitTime timeS)
-    degreesRight = spoolDegrees (rightRots steps) (splitTime timeS)
+plotterPic :: Plotter -> Picture
+plotterPic plotter = Pictures [ spoolPic (left plotter)
+                              , spoolPic (right plotter)
+                              , canvasPic
+                              , stringPic (point $ left plotter) (marker plotter)
+                              , stringPic (point $ right plotter) (marker plotter) ]
 
-spoolDegrees :: [Rot] -> (Int, Float) -> Float
-spoolDegrees rots (completeSteps, current) = steps * degreesPerStep
+spoolPic :: Spool -> Picture
+spoolPic spool = trans (point spool) (Rotate (angle spool) pic)
   where
-    steps = histToSteps hist current
-    hist = history rots completeSteps
+    pic = Pictures [ Color white (circle spoolRadius)
+                   , Color white (line [(0, 0), (spoolRadius, 0)]) ]
 
-stringLength :: Float -> Float -> [Rot] -> (Int, Float) -> Float
-stringLength initial dir rots (completeSteps, current) =
-  initial - steps * stepPull * dir
+stringPic :: Point -> Point -> Picture
+stringPic (spoolX, spoolY) end = Color (greyN 0.4) (line [start, end])
   where
-    steps = histToSteps hist current
-    hist = history rots completeSteps
+    start = (spoolX, spoolY - spoolRadius)
 
 trans :: Point -> Picture -> Picture
 trans (x, y) pic = Translate x y pic
-
-spoolPic :: Picture
-spoolPic = Pictures [ Color white (circle spoolRadius)
-                    , Color white (line [(0, 0), (spoolRadius, 0)]) ]
 
 canvasPic :: Picture
 canvasPic = color (greyN 0.2) (rectangleWire width height)
   where
     width = fst canvasSize
     height = snd canvasSize
-
-
-count :: Eq a => a -> [a] -> Int
-count elem list = length $ filter (\x -> x == elem) list
-
-neutralize :: [Rot] -> Int
-neutralize rots = (count R rots) - (count L rots)
-
-history :: [Rot] -> Int -> History
-history rots completeStepCount = 
-  (take completeStepCount rots, elementAt rots completeStepCount)
-
-elementAt :: [a] -> Int -> Maybe a
-elementAt list index = if length list <= index
-  then Nothing
-  else Just $ list !! index
 
 splitTime :: Float -> (Int, Float)
 splitTime time = (completeStepCount, remainder)
@@ -107,19 +137,7 @@ splitTime time = (completeStepCount, remainder)
     completeStepCount = floor steps
     remainder = (time - (fromIntegral completeStepCount) * timePerStep) / timePerStep
 
-histToSteps :: History -> Float -> Float
-histToSteps (complete, inProgress) remainder =
-  (fromIntegral $ neutralize complete) + fractional
-  where
-    fractional = case inProgress of
-      Nothing -> 0
-      Just rot -> remainder * (rotationDirection rot)
-
-markerPoint :: Float -> Float -> Point
-markerPoint left right =
-  intersectCircles leftSpoolPoint left rightSpoolPoint right
-
--- returns only bottom result as our strings are pulled by gravity
+---- returns only bottom result as our strings are pulled by gravity
 intersectCircles :: Point -> Float -> Point -> Float -> Point
 intersectCircles (x0, y0) r0 (x1, y1) r1 = (x3, y3)
   where
@@ -137,21 +155,7 @@ distance (x1, y1) (x2, y2) = sqrt (x'*x' + y'*y')
         x' = x1 - x2
         y' = y1 - y2
 
-string :: Point -> Point -> Picture
-string (spoolX, spoolY) end = Color (greyN 0.4) (line [start, end])
-  where
-    start = (spoolX, spoolY - spoolRadius)
-
-rotationDirection :: Rot -> Float
-rotationDirection L = -1
-rotationDirection R = 1
-rotationDirection N = 0
-
-leftRots :: [Step] -> [Rot]
-leftRots = map fst
-
-rightRots :: [Step] -> [Rot]
-rightRots = map snd
-
-
- --makeColor 0.3 0.3 1.0 1.0
+rotationSign :: Step -> Float
+rotationSign L = -1
+rotationSign R = 1
+rotationSign N = 0
