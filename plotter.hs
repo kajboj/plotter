@@ -7,14 +7,29 @@ type History = ([Rot], Maybe Rot)
 
 leftSpoolPoint = (-250, 200)
 rightSpoolPoint = (250, 200)
+
+initialLeftStringLength = 400
+initialRightStringLength = 300
+
 canvasSize = (300, 200)
 
 timePerStep = 1 :: Float
 degreesPerStep = 45 :: Float
+spoolCircumference = 2 * pi * spoolRadius
+stepPull = (degreesPerStep / 360) * spoolCircumference
 
 spoolRadius = 10 :: Float
 
 steps = [ (L, R)
+        , (N, L)
+        , (R, R) 
+        , (L, R)
+        , (N, L)
+        , (R, R) 
+        , (L, R)
+        , (N, L)
+        , (R, R) 
+        , (L, R)
         , (N, L)
         , (R, R) ]
 
@@ -25,9 +40,13 @@ main
     frame 
 
 frame :: Float -> Picture
-frame timeS
- = Pictures [ spools timeS
-            , canvasPic ]
+frame timeS = Scale 1.2 1.2
+  $ Pictures [ spools timeS
+             , string leftSpoolPoint marker
+             , string rightSpoolPoint marker
+             , canvasPic ]
+  where
+    marker = markerPoint initialLeftStringLength initialRightStringLength
 
 spools :: Float -> Picture
 spools timeS = Pictures
@@ -87,6 +106,33 @@ histToSteps (complete, inProgress) remainder =
     fractional = case inProgress of
       Nothing -> 0
       Just rot -> remainder * (direction rot)
+
+markerPoint :: Float -> Float -> Point
+markerPoint left right =
+  intersectCircles leftSpoolPoint left rightSpoolPoint right
+
+-- returns only bottom result as our strings are pulled by gravity
+intersectCircles :: Point -> Float -> Point -> Float -> Point
+intersectCircles (x0, y0) r0 (x1, y1) r1 = (x3, y3)
+  where
+    x3 = x2 + h * (y1 - y0) / d
+    y3 = y2 - h * (x1 - x0) / d
+    d = distance (x0, y0) (x1, y1)
+    a = (r0^2 - r1^2 + d^2) / (2*d)
+    h = sqrt (r0^2 - a^2)
+    x2 = x0 + a * (x1 - x0) / d
+    y2 = y0 + a * (y1 - y0) / d
+
+distance :: Point -> Point -> Float
+distance (x1, y1) (x2, y2) = sqrt (x'*x' + y'*y')
+    where 
+        x' = x1 - x2
+        y' = y1 - y2
+
+string :: Point -> Point -> Picture
+string (spoolX, spoolY) end = Color (greyN 0.4) (line [start, end])
+  where
+    start = (spoolX, spoolY - spoolRadius)
 
 direction :: Rot -> Float
 direction L = -1
