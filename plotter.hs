@@ -19,22 +19,20 @@ data Plotter = Plotter { left :: Spool
 leftSpool = Spool { point = (-250, 200)
                   , string = 400
                   , angle = 0
-                  , steps = map fst doubleSteps
+                  , steps = (N:map fst doubleSteps)
                   , pullSign = -1}
 
 rightSpool = Spool { point = (250, 200)
                    , string = 300
                    , angle = 0
-                   , steps = map snd doubleSteps
+                   , steps = (N:map snd doubleSteps)
                    , pullSign = 1}
 
-plotter = Plotter { left = leftSpool
-                  , right = rightSpool
-                  , marker = intersectCircles (point leftSpool)
-                                              (string leftSpool)
-                                              (point rightSpool)
-                                              (string rightSpool)
-                  , points = [] }
+-- nextPlotter to initialize points
+plotter = nextPlotter Plotter { left = leftSpool
+                              , right = rightSpool
+                              , marker = (0, 0)
+                              , points = [] }
 
 doubleSteps = [ (L, R)
               , (R, L)
@@ -53,14 +51,15 @@ nextPlotter :: Plotter -> Plotter
 nextPlotter plotter@(Plotter left' right' marker' points') = 
   Plotter { left = newLeft
           , right = newRight
-          , marker = intersectCircles (point newLeft)
-                                      (string newLeft)
-                                      (point newRight)
-                                      (string newRight)
-          , points = points' }
+          , marker = newMarker
+          , points = newMarker:points' }
   where
     newLeft = nextSpool left'
     newRight = nextSpool right'
+    newMarker = intersectCircles (point newLeft)
+                                 (string newLeft)
+                                 (point newRight)
+                                 (string newRight)
 
 transformPlotter :: Float -> Plotter -> Plotter
 transformPlotter time plotter = transformPlotter' plotter completeStepCount
@@ -108,7 +107,11 @@ plotterPic plotter = Pictures [ spoolPic (left plotter)
                               , spoolPic (right plotter)
                               , canvasPic
                               , stringPic (point $ left plotter) (marker plotter)
-                              , stringPic (point $ right plotter) (marker plotter) ]
+                              , stringPic (point $ right plotter) (marker plotter)
+                              , linePic (points plotter) ]
+
+linePic :: [Point] -> Picture
+linePic points = Color white (line points)
 
 spoolPic :: Spool -> Picture
 spoolPic spool = trans (point spool) (Rotate (angle spool) pic)
