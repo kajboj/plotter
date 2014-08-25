@@ -33,7 +33,16 @@ plotter = nextPlotter Plotter { left = leftSpool
                               , marker = (0, 0)
                               , points = [] }
 
-doubleSteps = calculateSteps plotter (0, 0)
+doubleSteps = foldl1 (++) (map calc lines)
+  where
+    calc (x, y) = calculateSteps ((left plotter), (right plotter)) x y
+    lines = zip points (tail points)
+    points = [ marker plotter
+            , (-150, -100)
+            , (-150, 100)
+            , (150, 100)
+            , (150, -100)
+            , (-150, -100) ]
 
 nextPlotter :: Plotter -> Plotter
 nextPlotter plotter@(Plotter left' right' marker' points') = 
@@ -74,8 +83,8 @@ nextSpool spool@(Spool point' string' angle' steps' pullSign') =
     rotSign = rotationSign step
 
 canvasSize = (300, 200)
-timePerStep = 1 :: Float
-degreesPerStep = 45 :: Float
+timePerStep = 0.1 :: Float
+degreesPerStep = 15 :: Float
 spoolCircumference = 2 * pi * spoolRadius
 pullPerStep = (degreesPerStep / 360) * spoolCircumference
 spoolRadius = 10 :: Float
@@ -151,19 +160,16 @@ rotationSign L = -1
 rotationSign R = 1
 rotationSign N = 0
 
-
-lengthChange :: Plotter -> Point -> (Float, Float)
-lengthChange plotter target = (newLeft - oldLeft, newRight - oldRight)
+lengthChange :: (Spool, Spool) -> Point -> Point -> (Float, Float)
+lengthChange (l, r) start target = (newLeft - oldLeft, newRight - oldRight)
   where
-    oldLeft = string l
-    oldRight = string r
+    oldLeft = distance (point l) start
+    oldRight = distance (point r) start
     newLeft = distance (point l) target
     newRight = distance (point r) target 
-    l = left plotter
-    r = right plotter
 
-calculateSteps :: Plotter -> Point -> [(Step, Step)]
-calculateSteps plotter point = toSteps $ lengthChange plotter point
+calculateSteps :: (Spool, Spool) -> Point -> Point -> [(Step, Step)]
+calculateSteps spools start target = toSteps $ lengthChange spools start target
 
 toInts :: (Float, Float) -> [(Int, Int)]
 toInts (leftDelta, rightDelta) = if leftSteps > rightSteps
