@@ -38,11 +38,14 @@ doubleSteps = foldl1 (++) (map calc lines)
     calc (x, y) = calculateSteps ((left plotter), (right plotter)) x y
     lines = zip points (tail points)
     points = [ marker plotter
-            , (-150, -100)
-            , (-150, 100)
-            , (150, 100)
-            , (150, -100)
-            , (-150, -100) ]
+             , (-150, -100)
+             , (-150, 100)
+             , (-75, 100)
+             , (0, -100)
+             , (75, 100)
+             , (150, 100)
+             , (150, -100)
+             , (-150, -100) ]
 
 nextPlotter :: Plotter -> Plotter
 nextPlotter plotter@(Plotter left' right' marker' points') = 
@@ -83,8 +86,8 @@ nextSpool spool@(Spool point' string' angle' steps' pullSign') =
     rotSign = rotationSign step
 
 canvasSize = (300, 200)
-timePerStep = 0.1 :: Float
-degreesPerStep = 15 :: Float
+timePerStep = 0.002 :: Float
+degreesPerStep = 1 :: Float
 spoolCircumference = 2 * pi * spoolRadius
 pullPerStep = (degreesPerStep / 360) * spoolCircumference
 spoolRadius = 10 :: Float
