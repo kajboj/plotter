@@ -1,3 +1,11 @@
+-- to do:
+--
+-- * change L, R to U, D
+-- * make model more precise by calculating exact point on the spool where
+--   string unravels
+-- * split into multiple files: model, driver, parser
+-- * why is driver so ugly and long?
+
 import Graphics.Gloss
 
 data Step = L | R | N deriving (Eq, Show)
