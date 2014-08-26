@@ -9,11 +9,13 @@
 import Graphics.Gloss
 
 data Step = L | R | N deriving (Eq, Show)
+data Command = PenDown | PenUp | Move (Step, Step) deriving (Show)
+data Pen = Up | Down deriving (Show)
+data HPGLCommand = PD | PU | MV (Float, Float)
 
 data Spool = Spool { point :: Point
                    , string :: Float
                    , angle :: Float
-                   , steps :: [Step]
                    , pullSign :: Float
                    } deriving (Show)
 
@@ -21,31 +23,38 @@ data Plotter = Plotter { left :: Spool
                        , right :: Spool  
                        , marker :: Point
                        , points :: [Point]
+                       , commands :: [Command]
+                       , pen :: Pen
                        } deriving (Show)  
+
 
 leftSpool = Spool { point = (-250, 200)
                   , string = 400
                   , angle = 0
-                  , steps = (N:map fst doubleSteps)
                   , pullSign = -1}
 
 rightSpool = Spool { point = (250, 200)
                    , string = 300
                    , angle = 0
-                   , steps = (N:map snd doubleSteps)
                    , pullSign = 1}
 
 -- nextPlotter to initialize points
 plotter = nextPlotter Plotter { left = leftSpool
                               , right = rightSpool
                               , marker = (0, 0)
-                              , points = [] }
+                              , points = []
+                              , commands = commandSequence
+                              , pen = Up }
 
-doubleSteps = foldl1 (++) (map calc lines)
+commandSequence = [PenDown] ++ map Move (foldl1 (++) (map calc lines))
   where
-    calc (x, y) = calculateSteps ((left plotter), (right plotter)) x y
+    calc (x, y) = calculateSteps (point leftSpool) (point rightSpool) x y
     lines = zip points (tail points)
-    points = [ marker plotter
+    initialPoint = intersectCircles (point leftSpool)
+                                    (string leftSpool)
+                                    (point rightSpool)
+                                    (string rightSpool)
+    points = [ initialPoint
              , (-150, -100)
              , (-150, 100)
              , (-75, 100)
@@ -56,18 +65,34 @@ doubleSteps = foldl1 (++) (map calc lines)
              , (-150, -100) ]
 
 nextPlotter :: Plotter -> Plotter
-nextPlotter plotter@(Plotter left' right' marker' points') = 
+nextPlotter plotter@(Plotter left' right' marker' points' [] pen) = plotter
+
+nextPlotter plotter@(Plotter left' right' marker' points' (command:coms) pen') = 
   Plotter { left = newLeft
           , right = newRight
           , marker = newMarker
-          , points = newMarker:points' }
+          , points = newPoints
+          , commands = coms
+          , pen = newPen }
   where
-    newLeft = nextSpool left'
-    newRight = nextSpool right'
-    newMarker = intersectCircles (point newLeft)
-                                 (string newLeft)
-                                 (point newRight)
-                                 (string newRight)
+    newLeft = nextSpool left' leftCommand
+    newRight = nextSpool right' rightCommand
+    leftCommand = case command of 
+      Move (l, r) -> l
+      _ -> N
+    rightCommand = case command of 
+      Move (l, r) -> r
+      _ -> N
+    newMarker = intersectCircles (point newLeft) (string newLeft)
+                                 (point newRight) (string newRight)
+    newPoints = case pen' of
+      Up -> points'
+      Down -> newMarker:points'
+    newPen = case command of
+      PenDown -> Down
+      PenUp -> Up
+      _ -> pen'
+
 
 transformPlotter :: Float -> Plotter -> Plotter
 transformPlotter time plotter = transformPlotter' plotter completeStepCount
@@ -76,21 +101,13 @@ transformPlotter time plotter = transformPlotter' plotter completeStepCount
     transformPlotter' plotter n = transformPlotter' (nextPlotter plotter) (n-1)
     (completeStepCount, _) = splitTime time
 
-nextSpool :: Spool -> Spool
-nextSpool spool@(Spool { point = _
-                       , string = _
-                       , angle = _
-                       , steps = []
-                       , pullSign = _}) = spool
-
-nextSpool spool@(Spool point' string' angle' steps' pullSign') =
+nextSpool :: Spool -> Step -> Spool
+nextSpool spool@(Spool point' string' angle' pullSign') step =
   Spool { point = point'
         , string = string' + pullPerStep * pullSign' * rotSign
         , angle = angle' + degreesPerStep * rotSign
-        , steps = tail steps'
         , pullSign = pullSign' }
   where
-    step = head steps'
     rotSign = rotationSign step
 
 canvasSize = (300, 200)
@@ -171,16 +188,17 @@ rotationSign L = -1
 rotationSign R = 1
 rotationSign N = 0
 
-lengthChange :: (Spool, Spool) -> Point -> Point -> (Float, Float)
-lengthChange (l, r) start target = (newLeft - oldLeft, newRight - oldRight)
+lengthChange :: Point -> Point -> Point -> Point -> (Float, Float)
+lengthChange leftPoint rightPoint start target = (newLeft - oldLeft, newRight - oldRight)
   where
-    oldLeft = distance (point l) start
-    oldRight = distance (point r) start
-    newLeft = distance (point l) target
-    newRight = distance (point r) target 
+    oldLeft = distance leftPoint start
+    oldRight = distance rightPoint start
+    newLeft = distance leftPoint target
+    newRight = distance rightPoint target 
 
-calculateSteps :: (Spool, Spool) -> Point -> Point -> [(Step, Step)]
-calculateSteps spools start target = toSteps $ lengthChange spools start target
+calculateSteps :: Point -> Point -> Point -> Point -> [(Step, Step)]
+calculateSteps leftPoint rightPoint start target =
+  toSteps $ lengthChange leftPoint rightPoint start target
 
 toInts :: (Float, Float) -> [(Int, Int)]
 toInts (leftDelta, rightDelta) = if leftSteps > rightSteps
