@@ -5,6 +5,7 @@
 --   string unravels
 -- * split into multiple files: model, driver, parser
 -- * why is driver so ugly and long?
+-- * rename lineS to someting sensible but not clashing with Prelude
 
 import Graphics.Gloss
 
@@ -22,7 +23,7 @@ data Spool = Spool { point :: Point
 data Plotter = Plotter { left :: Spool  
                        , right :: Spool  
                        , marker :: Point
-                       , points :: [Point]
+                       , lineS :: [(Point, Point)]
                        , commands :: [Command]
                        , pen :: Pen
                        } deriving (Show)  
@@ -42,18 +43,18 @@ rightSpool = Spool { point = (250, 200)
 plotter = nextPlotter Plotter { left = leftSpool
                               , right = rightSpool
                               , marker = (0, 0)
-                              , points = []
+                              , lineS = []
                               , commands = commandSequence
                               , pen = Up }
 
 nextPlotter :: Plotter -> Plotter
-nextPlotter plotter@(Plotter left' right' marker' points' [] pen) = plotter
+nextPlotter plotter@(Plotter left' right' marker' lineS' [] pen) = plotter
 
-nextPlotter plotter@(Plotter left' right' marker' points' (command:coms) pen') = 
+nextPlotter plotter@(Plotter left' right' marker' lineS' (command:coms) pen') = 
   Plotter { left = newLeft
           , right = newRight
           , marker = newMarker
-          , points = newPoints
+          , lineS = newLines
           , commands = coms
           , pen = newPen }
   where
@@ -67,9 +68,9 @@ nextPlotter plotter@(Plotter left' right' marker' points' (command:coms) pen') =
       _ -> N
     newMarker = intersectCircles (point newLeft) (string newLeft)
                                  (point newRight) (string newRight)
-    newPoints = case pen' of
-      Up -> points'
-      Down -> newMarker:points'
+    newLines = case pen' of
+      Up -> lineS'
+      Down -> (newMarker, marker'):lineS'
     newPen = case command of
       PenDown -> Down
       PenUp -> Up
@@ -115,10 +116,12 @@ plotterPic plotter = Pictures [ spoolPic (left plotter)
                               , canvasPic
                               , stringPic (point $ left plotter) (marker plotter)
                               , stringPic (point $ right plotter) (marker plotter)
-                              , linePic (points plotter) ]
+                              , linePic (lineS plotter) ]
 
-linePic :: [Point] -> Picture
-linePic points = Color white (line points)
+linePic :: [(Point, Point)] -> Picture
+linePic lines = Pictures $ map renderLine lines
+  where
+    renderLine (start, end) = Color white (line [start, end])
 
 spoolPic :: Spool -> Picture
 spoolPic spool = trans (point spool) (Rotate (angle spool) pic)
