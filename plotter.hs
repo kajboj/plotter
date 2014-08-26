@@ -46,24 +46,6 @@ plotter = nextPlotter Plotter { left = leftSpool
                               , commands = commandSequence
                               , pen = Up }
 
-commandSequence = [PenDown] ++ map Move (foldl1 (++) (map calc lines))
-  where
-    calc (x, y) = calculateSteps (point leftSpool) (point rightSpool) x y
-    lines = zip points (tail points)
-    initialPoint = intersectCircles (point leftSpool)
-                                    (string leftSpool)
-                                    (point rightSpool)
-                                    (string rightSpool)
-    points = [ initialPoint
-             , (-150, -100)
-             , (-150, 100)
-             , (-75, 100)
-             , (0, -100)
-             , (75, 100)
-             , (150, 100)
-             , (150, -100)
-             , (-150, -100) ]
-
 nextPlotter :: Plotter -> Plotter
 nextPlotter plotter@(Plotter left' right' marker' points' [] pen) = plotter
 
@@ -248,3 +230,37 @@ rightRotation 0 = N
 rightRotation lengthChange = if lengthChange > 0
   then R
   else L
+
+
+hpgl = [ PD
+       , MV (-150, -100)
+       , PU
+       , MV (-150, 100)
+       , PD
+       , MV (-75, 100)
+       , MV (0, -100)
+       , MV (75, 100)
+       , MV (150, 100)
+       , MV (150, -100)
+       , MV (-150, -100) ]
+
+hpglToCommands :: [HPGLCommand] -> [Command]
+hpglToCommands hpglCommands = hpglToCommands' (0, 0) hpglCommands
+  where
+    hpglToCommands' prev [] = []
+    hpglToCommands' prev (hpglCommand:coms) = (commands ++ hpglToCommands' newPrev coms)
+      where
+        commands = case hpglCommand of
+          PD -> [PenDown]
+          PU -> [PenUp]
+          MV point -> lineSteps prev point
+        newPrev = case hpglCommand of
+          MV point -> point
+          _ -> prev
+
+commandSequence = hpglToCommands hpgl
+
+lineSteps :: Point -> Point -> [Command]
+lineSteps start end = map Move steps
+  where
+    steps = calculateSteps (point leftSpool) (point rightSpool) start end
