@@ -30,12 +30,12 @@ data Plotter = Plotter { left :: Spool
 
 
 leftSpool = Spool { point = (-250, 200)
-                  , string = 400
+                  , string = distance (-250, 200) (0, 0)
                   , angle = 0
                   , pullSign = -1}
 
 rightSpool = Spool { point = (250, 200)
-                   , string = 300
+                   , string = distance (250, 200) (0, 0)
                    , angle = 0
                    , pullSign = 1}
 
