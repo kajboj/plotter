@@ -7,7 +7,10 @@
 -- * why is driver so ugly and long?
 -- * rename lineS to someting sensible but not clashing with Prelude
 
+module Plotter.Main (main) where
+
 import Graphics.Gloss
+import Plotter.Driver
 
 data Step = L | R | N deriving (Eq, Show)
 data Command = PenDown | PenUp | Move (Step, Step) deriving (Show)
@@ -245,7 +248,7 @@ hpgl = [ PD
        , MV (75, 100)
        , MV (150, 100)
        , MV (150, -100)
-       , MV (-150, -100) ]
+       , MV (-100, -100) ]
 
 hpglToCommands :: [HPGLCommand] -> [Command]
 hpglToCommands hpglCommands = hpglToCommands' (0, 0) hpglCommands

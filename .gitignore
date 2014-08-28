@@ -1,3 +1,5 @@
 plotter
-plotter.hi
-plotter.o
+Main
+*.hi
+*.o
+build

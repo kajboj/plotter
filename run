@@ -1,5 +1,7 @@
 #!/bin/sh
 set -e
 
-ghc plotter.hs
-./plotter
+rm -rf build/*
+rm -f Main
+ghc -outputdir build Main -o Main
+./Main
