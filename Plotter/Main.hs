@@ -7,14 +7,18 @@
 -- * why is driver so ugly and long?
 -- * rename lines_ to someting sensible but not clashing with Prelude
 
+{-# LANGUAGE DeriveDataTypeable #-}
+
 module Plotter.Main (main) where
 
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Animate
 import Plotter.Driver
+import System.IO.Storage
+import Data.Typeable
 
 data Step = L | R | N deriving (Eq, Show)
-data Command = PenDown | PenUp | Move (Step, Step) deriving (Show)
+data Command = PenDown | PenUp | Move (Step, Step) deriving (Show, Typeable)
 data Pen = Up | Down deriving (Show)
 data HPGLCommand = PD | PU | MV (Float, Float)
 
@@ -29,7 +33,7 @@ data Plotter = Plotter { left :: Spool
                        , marker :: Point
                        , lines_ :: [(Point, Point)]
                        , pen :: Pen
-                       } deriving (Show)  
+                       } deriving (Show, Typeable)
 
 
 leftSpool = Spool { point = (-250, 200)
@@ -75,13 +79,6 @@ nextPlotter command plotter@(Plotter left' right' marker' lines_' pen') =
       PenUp -> Up
       _ -> pen'
 
-
-transformPlotter :: [Command] -> Plotter -> Plotter
-transformPlotter [] plotter = plotter
-transformPlotter (command:coms) plotter = transformPlotter coms next
-  where
-    next = nextPlotter command plotter
-
 nextSpool :: Spool -> Step -> Spool
 nextSpool spool@(Spool point' string' angle' pullSign') step =
   Spool { point = point'
@@ -91,24 +88,51 @@ nextSpool spool@(Spool point' string' angle' pullSign') step =
   where rotSign = rotationSign step
 
 canvasSize = (300, 200)
-timePerStep = 0.002 :: Float
-degreesPerStep = 1 :: Float
+degreesPerStep = 15 :: Float
 spoolCircumference = 2 * pi * spoolRadius
 pullPerStep = (degreesPerStep / 360) * spoolCircumference
 spoolRadius = 10 :: Float
 
 main :: IO ()
 main 
- =  animateIO (InWindow "Plotter" (800, 600) (5, 5))
-               black
-    (frame plotter)
+ = do 
+   withStore "global" animation
+   where
+     animation = do
+       putValue "global" "plotter" plotter
+       putValue "global" "commands" commandSequence
+       animateIO (InWindow "Plotter" (800, 600) (5, 5))
+                 black
+         (frame (getValue "global" "plotter")
+                (putValue "global" "plotter")
+                (commandGetter (getValue "global" "commands")
+                               (putValue "global" "commands")))
 
-frame :: Plotter -> Float -> IO Picture
-frame plotter timeS = return pic
-  where
-    pic = scale $ plotterPic (transformPlotter steps plotter)
-    scale = Scale 1.2 1.2
-    steps = take (completeStepCount timeS) commandSequence
+type Get a = IO (Maybe a)
+type Set a = a -> IO ()
+
+commandGetter :: Get [Command] -> Set [Command] -> IO Command
+commandGetter getCommands setCommands = do
+  maybe <- getCommands
+  case maybe of
+    Just (command:coms) -> do
+      setCommands coms
+      return command
+    _ -> return $ Move (N, N)
+
+frame :: Get Plotter -> Set Plotter -> IO Command -> Float -> IO Picture
+frame getPlotter setPlotter getCommand timeS = do
+  maybe <- getPlotter
+  case maybe of
+    Nothing -> return $ Color white (circle 10)
+    Just plotter -> do
+      command <- getCommand
+      setPlotter $ nextPlotter command plotter
+      return $ pic $ nextPlotter command plotter
+
+    where
+      pic plotter = scale $ plotterPic plotter
+      scale = Scale 1.2 1.2
 
 plotterPic :: Plotter -> Picture
 plotterPic plotter = Pictures [ spoolPic (left plotter)
@@ -142,9 +166,6 @@ canvasPic = color (greyN 0.2) (rectangleWire width height)
   where
     width = fst canvasSize
     height = snd canvasSize
-
-completeStepCount :: Float -> Int
-completeStepCount time = floor (time / timePerStep)
 
 ---- returns only bottom result as our strings are pulled by gravity
 intersectCircles :: Point -> Float -> Point -> Float -> Point
