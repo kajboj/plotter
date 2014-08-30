@@ -5,7 +5,6 @@
 --   string unravels
 -- * split into multiple files: model, driver, parser
 -- * why is driver so ugly and long?
--- * rename lines_ to someting sensible but not clashing with Prelude
 
 {-# LANGUAGE DeriveDataTypeable #-}
 
@@ -125,13 +124,12 @@ frame getPlotter setPlotter getCommand timeS = do
       pic plotter = scale $ plotterPic plotter
       scale = Scale 1.2 1.2
       plotter maybe = case maybe of
-        Nothing -> initialPlotter
         Just p -> p
-      initialPlotter = nextPlotter PenUp Plotter { left = leftSpool
-                                                 , right = rightSpool
-                                                 , marker = (0, 0)
-                                                 , lines_ = []
-                                                 , pen = Up }
+        Nothing -> nextPlotter PenUp Plotter { left = leftSpool
+                                             , right = rightSpool
+                                             , marker = (0, 0)
+                                             , lines_ = []
+                                             , pen = Up }
 
 plotterPic :: Plotter -> Picture
 plotterPic plotter = Pictures [ spoolPic (left plotter)
