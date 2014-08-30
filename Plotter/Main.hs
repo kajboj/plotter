@@ -47,11 +47,6 @@ rightSpool = Spool { point = (250, 200)
                    , pullSign = 1}
 
 -- nextPlotter to initialize points
-plotter = nextPlotter PenUp Plotter { left = leftSpool
-                                           , right = rightSpool
-                                           , marker = (0, 0)
-                                           , lines_ = []
-                                           , pen = Up }
 
 nextPlotter :: Command -> Plotter -> Plotter
 nextPlotter command plotter@(Plotter left' right' marker' lines_' pen') = 
@@ -99,7 +94,6 @@ main
    withStore "global" animation
    where
      animation = do
-       putValue "global" "plotter" plotter
        putValue "global" "commands" commandSequence
        animateIO (InWindow "Plotter" (800, 600) (5, 5))
                  black
@@ -123,16 +117,21 @@ commandGetter getCommands setCommands = do
 frame :: Get Plotter -> Set Plotter -> IO Command -> Float -> IO Picture
 frame getPlotter setPlotter getCommand timeS = do
   maybe <- getPlotter
-  case maybe of
-    Nothing -> return $ Color white (circle 10)
-    Just plotter -> do
-      command <- getCommand
-      setPlotter $ nextPlotter command plotter
-      return $ pic $ nextPlotter command plotter
+  command <- getCommand
+  setPlotter $ nextPlotter command (plotter maybe)
+  return $ pic $ nextPlotter command (plotter maybe)
 
     where
       pic plotter = scale $ plotterPic plotter
       scale = Scale 1.2 1.2
+      plotter maybe = case maybe of
+        Nothing -> initialPlotter
+        Just p -> p
+      initialPlotter = nextPlotter PenUp Plotter { left = leftSpool
+                                                 , right = rightSpool
+                                                 , marker = (0, 0)
+                                                 , lines_ = []
+                                                 , pen = Up }
 
 plotterPic :: Plotter -> Picture
 plotterPic plotter = Pictures [ spoolPic (left plotter)
