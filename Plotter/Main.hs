@@ -5,11 +5,12 @@
 --   string unravels
 -- * split into multiple files: model, driver, parser
 -- * why is driver so ugly and long?
--- * rename lineS to someting sensible but not clashing with Prelude
+-- * rename lines_ to someting sensible but not clashing with Prelude
 
 module Plotter.Main (main) where
 
 import Graphics.Gloss
+import Graphics.Gloss.Interface.IO.Animate
 import Plotter.Driver
 
 data Step = L | R | N deriving (Eq, Show)
@@ -26,8 +27,7 @@ data Spool = Spool { point :: Point
 data Plotter = Plotter { left :: Spool  
                        , right :: Spool  
                        , marker :: Point
-                       , lineS :: [(Point, Point)]
-                       , commands :: [Command]
+                       , lines_ :: [(Point, Point)]
                        , pen :: Pen
                        } deriving (Show)  
 
@@ -43,22 +43,18 @@ rightSpool = Spool { point = (250, 200)
                    , pullSign = 1}
 
 -- nextPlotter to initialize points
-plotter = nextPlotter Plotter { left = leftSpool
-                              , right = rightSpool
-                              , marker = (0, 0)
-                              , lineS = []
-                              , commands = commandSequence
-                              , pen = Up }
+plotter = nextPlotter PenUp Plotter { left = leftSpool
+                                           , right = rightSpool
+                                           , marker = (0, 0)
+                                           , lines_ = []
+                                           , pen = Up }
 
-nextPlotter :: Plotter -> Plotter
-nextPlotter plotter@(Plotter left' right' marker' lineS' [] pen) = plotter
-
-nextPlotter plotter@(Plotter left' right' marker' lineS' (command:coms) pen') = 
+nextPlotter :: Command -> Plotter -> Plotter
+nextPlotter command plotter@(Plotter left' right' marker' lines_' pen') = 
   Plotter { left = newLeft
           , right = newRight
           , marker = newMarker
-          , lineS = newLines
-          , commands = coms
+          , lines_ = newlines_
           , pen = newPen }
   where
     newLeft = nextSpool left' leftCommand
@@ -71,21 +67,20 @@ nextPlotter plotter@(Plotter left' right' marker' lineS' (command:coms) pen') =
       _ -> N
     newMarker = intersectCircles (point newLeft) (string newLeft)
                                  (point newRight) (string newRight)
-    newLines = case pen' of
-      Up -> lineS'
-      Down -> (newMarker, marker'):lineS'
+    newlines_ = case pen' of
+      Up -> lines_'
+      Down -> (newMarker, marker'):lines_'
     newPen = case command of
       PenDown -> Down
       PenUp -> Up
       _ -> pen'
 
 
-transformPlotter :: Float -> Plotter -> Plotter
-transformPlotter time plotter = transformPlotter' plotter completeStepCount
+transformPlotter :: [Command] -> Plotter -> Plotter
+transformPlotter [] plotter = plotter
+transformPlotter (command:coms) plotter = transformPlotter coms next
   where
-    transformPlotter' plotter 0 = plotter
-    transformPlotter' plotter n = transformPlotter' (nextPlotter plotter) (n-1)
-    (completeStepCount, _) = splitTime time
+    next = nextPlotter command plotter
 
 nextSpool :: Spool -> Step -> Spool
 nextSpool spool@(Spool point' string' angle' pullSign') step =
@@ -93,8 +88,7 @@ nextSpool spool@(Spool point' string' angle' pullSign') step =
         , string = string' + pullPerStep * pullSign' * rotSign
         , angle = angle' + degreesPerStep * rotSign
         , pullSign = pullSign' }
-  where
-    rotSign = rotationSign step
+  where rotSign = rotationSign step
 
 canvasSize = (300, 200)
 timePerStep = 0.002 :: Float
@@ -105,13 +99,16 @@ spoolRadius = 10 :: Float
 
 main :: IO ()
 main 
- =  animate (InWindow "Plotter" (800, 600) (5, 5))
-                black
+ =  animateIO (InWindow "Plotter" (800, 600) (5, 5))
+               black
     (frame plotter)
 
-frame :: Plotter -> Float -> Picture
-frame plotter timeS = Scale 1.2 1.2
-  $ plotterPic (transformPlotter timeS plotter)
+frame :: Plotter -> Float -> IO Picture
+frame plotter timeS = return pic
+  where
+    pic = scale $ plotterPic (transformPlotter steps plotter)
+    scale = Scale 1.2 1.2
+    steps = take (completeStepCount timeS) commandSequence
 
 plotterPic :: Plotter -> Picture
 plotterPic plotter = Pictures [ spoolPic (left plotter)
@@ -119,10 +116,10 @@ plotterPic plotter = Pictures [ spoolPic (left plotter)
                               , canvasPic
                               , stringPic (point $ left plotter) (marker plotter)
                               , stringPic (point $ right plotter) (marker plotter)
-                              , linePic (lineS plotter) ]
+                              , linePic (lines_ plotter) ]
 
 linePic :: [(Point, Point)] -> Picture
-linePic lines = Pictures $ map renderLine lines
+linePic lines_ = Pictures $ map renderLine lines_
   where
     renderLine (start, end) = Color white (line [start, end])
 
@@ -146,12 +143,8 @@ canvasPic = color (greyN 0.2) (rectangleWire width height)
     width = fst canvasSize
     height = snd canvasSize
 
-splitTime :: Float -> (Int, Float)
-splitTime time = (completeStepCount, remainder)
-  where
-    steps = time / timePerStep
-    completeStepCount = floor steps
-    remainder = (time - (fromIntegral completeStepCount) * timePerStep) / timePerStep
+completeStepCount :: Float -> Int
+completeStepCount time = floor (time / timePerStep)
 
 ---- returns only bottom result as our strings are pulled by gravity
 intersectCircles :: Point -> Float -> Point -> Float -> Point
@@ -259,14 +252,14 @@ hpglToCommands hpglCommands = hpglToCommands' (0, 0) hpglCommands
         commands = case hpglCommand of
           PD -> [PenDown]
           PU -> [PenUp]
-          MV point -> lineSteps prev point
+          MV point -> lines_teps prev point
         newPrev = case hpglCommand of
           MV point -> point
           _ -> prev
 
 commandSequence = hpglToCommands hpgl
 
-lineSteps :: Point -> Point -> [Command]
-lineSteps start end = map Move steps
+lines_teps :: Point -> Point -> [Command]
+lines_teps start end = map Move steps
   where
     steps = calculateSteps (point leftSpool) (point rightSpool) start end
