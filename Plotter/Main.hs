@@ -107,10 +107,10 @@ main :: IO ()
 main 
  =  animate (InWindow "Plotter" (800, 600) (5, 5))
                 black
-    frame 
+    (frame plotter)
 
-frame :: Float -> Picture
-frame timeS = Scale 1.2 1.2
+frame :: Plotter -> Float -> Picture
+frame plotter timeS = Scale 1.2 1.2
   $ plotterPic (transformPlotter timeS plotter)
 
 plotterPic :: Plotter -> Picture
