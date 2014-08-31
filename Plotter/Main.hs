@@ -11,10 +11,12 @@
 module Plotter.Main (main) where
 
 import Plotter.Shared
+import Plotter.Command
 import Plotter.Driver
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Animate
 import System.IO.Storage
+import Data.Typeable
 
 
 initialPosition = (0, 0)

@@ -1,5 +1,6 @@
 module Plotter.Driver (commandSequence) where
 
+import Plotter.Command
 import Plotter.Shared
 
 data HPGLCommand = PD | PU | MV (Float, Float)

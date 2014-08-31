@@ -7,17 +7,11 @@ module Plotter.Shared ( pullPerStep
                       , rightSpoolPoint
 
                       , distance
-                      
-                      , Point
-                      , Typeable
-                      , Step(L, R, N)
-                      , Command (PenDown, PenUp, Move) ) where
+
+                      , Point ) where
 
 import Graphics.Gloss.Data.Point
 import Data.Typeable
-
-data Step = L | R | N deriving (Eq, Show)
-data Command = PenDown | PenUp | Move (Step, Step) deriving (Show, Typeable)
 
 degreesPerStep = 10 :: Float
 spoolRadius = 10 :: Float
