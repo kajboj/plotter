@@ -12,7 +12,7 @@ module Plotter.Main (main) where
 
 import Plotter.Shared
 import Plotter.Command
-import Plotter.Driver
+import Plotter.CommandReader
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Animate
 import System.IO.Storage
@@ -88,25 +88,14 @@ main
    withStore "global" animation
    where
      animation = do
-       putValue "global" "commands" commandSequence
        animateIO (InWindow "Plotter" (800, 600) (5, 5))
                  black
          (frame (getValue "global" "plotter")
                 (putValue "global" "plotter")
-                (commandGetter (getValue "global" "commands")
-                               (putValue "global" "commands")))
+                commandReader)
 
 type Get a = IO (Maybe a)
 type Set a = a -> IO ()
-
-commandGetter :: Get [Command] -> Set [Command] -> IO Command
-commandGetter getCommands setCommands = do
-  maybe <- getCommands
-  case maybe of
-    Just (command:coms) -> do
-      setCommands coms
-      return command
-    _ -> return $ Move (N, N)
 
 frame :: Get Plotter -> Set Plotter -> IO Command -> Float -> IO Picture
 frame getPlotter setPlotter getCommand timeS = do
