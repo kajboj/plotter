@@ -16,6 +16,8 @@ import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Animate
 import System.IO.Storage
 
+
+initialPosition = (0, 0)
 canvasSize = (300, 300)
 
 data Pen = Up | Down deriving (Show)
@@ -34,13 +36,13 @@ data Plotter = Plotter { left :: Spool
                        } deriving (Show, Typeable)
 
 
-leftSpool = Spool { point = (-250, 200)
-                  , string = distance (-250, 200) (0, 0)
+leftSpool = Spool { point = leftSpoolPoint
+                  , string = distance leftSpoolPoint initialPosition
                   , angle = 0
                   , pullSign = -1}
 
-rightSpool = Spool { point = (250, 200)
-                   , string = distance (250, 200) (0, 0)
+rightSpool = Spool { point = rightSpoolPoint
+                   , string = distance rightSpoolPoint initialPosition
                    , angle = 0
                    , pullSign = 1}
 
@@ -118,7 +120,7 @@ frame getPlotter setPlotter getCommand timeS = do
         Just p -> p
         Nothing -> nextPlotter PenUp Plotter { left = leftSpool
                                              , right = rightSpool
-                                             , marker = (0, 0)
+                                             , marker = initialPosition
                                              , lines_ = []
                                              , pen = Up }
 
