@@ -2,5 +2,4 @@
 set -e
 
 rm -rf build/*
-rm -f Main
 ghc -outputdir build Main -o build/Main
