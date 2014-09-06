@@ -8,7 +8,7 @@
 
 {-# LANGUAGE DeriveDataTypeable #-}
 
-module Plotter.Main (main) where
+module Plotter.Device (main) where
 
 import Plotter.Shared
 import Plotter.Command

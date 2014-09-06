@@ -1,4 +1,4 @@
-module Plotter.CommandWriter (commandWriter) where
+module Plotter.CommandWriter (commandWriter, main) where
 
 import Plotter.Command
 import System.Posix.Files
@@ -11,6 +11,12 @@ commandWriter :: Command -> IO ()
 commandWriter command = do
   fd <- initializeWriter
   putCommand fd command
+
+main :: IO ()
+main 
+ = do 
+  commandWriter $ Move (L, N)
+
 
 initializeWriter :: IO Fd
 initializeWriter = do

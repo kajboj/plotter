@@ -23,7 +23,7 @@ getCommand fd = do
   isEof <- hIsEOF fd
   if isEof
     then do
-      putStrLn "no input"
+      --putStrLn "no input"
       return $ Move (N, N)
     else do
       line <- hGetLine fd
