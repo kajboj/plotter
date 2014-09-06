@@ -48,8 +48,8 @@ rightSpool = Spool { point = rightSpoolPoint
                    , angle = 0
                    , pullSign = 1}
 
-nextPlotter :: Command -> Plotter -> Plotter
-nextPlotter command plotter@(Plotter left' right' marker' lines_' pen') = 
+nextPlotter :: Plotter -> Command -> Plotter
+nextPlotter plotter@(Plotter left' right' marker' lines_' pen') command = 
   Plotter { left = newLeft
           , right = newRight
           , marker = newMarker
@@ -99,9 +99,7 @@ type Get a = IO (Maybe a)
 type Set a = a -> IO ()
 
 transformPlotter :: [Command] -> Plotter -> Plotter
-transformPlotter commands plotter = foldl next plotter commands
-  where
-    next = flip nextPlotter
+transformPlotter commands plotter = foldl nextPlotter plotter commands
 
 frame :: Get Plotter -> Set Plotter -> IO [Command] -> Float -> IO Picture
 frame getPlotter setPlotter getCommands timeS = do
@@ -115,11 +113,12 @@ frame getPlotter setPlotter getCommands timeS = do
       scale = Scale 1.2 1.2
       plotter maybe = case maybe of
         Just p -> p
-        Nothing -> nextPlotter PenUp Plotter { left = leftSpool
-                                             , right = rightSpool
-                                             , marker = initialPosition
-                                             , lines_ = []
-                                             , pen = Up }
+        Nothing -> nextPlotter Plotter { left = leftSpool
+                                       , right = rightSpool
+                                       , marker = initialPosition
+                                       , lines_ = []
+                                       , pen = Up }
+                                       PenUp
 
 plotterPic :: Plotter -> Picture
 plotterPic plotter = Pictures [ spoolPic (left plotter)
