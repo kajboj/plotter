@@ -1,8 +1,9 @@
-module Plotter.CommandReader (initializeReader, getCommand) where
+module Plotter.CommandReader (initializeReader, getCommands) where
 
 import Plotter.Command
 import System.Posix.Files
 import System.IO
+import Control.Applicative
 
 initializeReader :: IO Handle
 initializeReader = do
@@ -12,6 +13,16 @@ initializeReader = do
 
   where
     path = "input"
+
+getCommands :: Handle -> IO [Command]
+getCommands = getCommands' 2 
+  where
+    getCommands' 0 _ = return []
+    getCommands' n fd =
+      --cmd <- getCommand fd
+      --rest <- getCommands' (n-1) fd
+      --return (cmd:rest)
+      (:) <$> (getCommand fd) <*> (getCommands' (n-1) fd)
 
 getCommand :: Handle -> IO Command
 getCommand fd = do

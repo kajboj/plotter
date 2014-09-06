@@ -93,17 +93,22 @@ main
                  black
          (frame (getValue "global" "plotter")
                 (putValue "global" "plotter")
-                (getCommand fileHandle))
+                (getCommands fileHandle))
 
 type Get a = IO (Maybe a)
 type Set a = a -> IO ()
 
-frame :: Get Plotter -> Set Plotter -> IO Command -> Float -> IO Picture
-frame getPlotter setPlotter getCommand timeS = do
+transformPlotter :: [Command] -> Plotter -> Plotter
+transformPlotter commands plotter = foldl next plotter commands
+  where
+    next = flip nextPlotter
+
+frame :: Get Plotter -> Set Plotter -> IO [Command] -> Float -> IO Picture
+frame getPlotter setPlotter getCommands timeS = do
   maybe <- getPlotter
-  command <- getCommand
-  setPlotter $ nextPlotter command (plotter maybe)
-  return $ pic $ nextPlotter command (plotter maybe)
+  commands <- getCommands
+  setPlotter $ transformPlotter commands (plotter maybe)
+  return $ pic $ transformPlotter commands (plotter maybe)
 
     where
       pic plotter = scale $ plotterPic plotter
