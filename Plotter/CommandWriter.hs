@@ -7,15 +7,17 @@ import System.Posix.Types
 import System.IO
 import System.Directory
 
-commandWriter :: Command -> IO ()
-commandWriter command = do
+commandWriter :: [Command] -> IO ()
+commandWriter commands = do
   fd <- initializeWriter
-  putCommand fd command
+  putCommands fd commands
 
 main :: IO ()
 main 
  = do 
-  commandWriter $ Move (L, N)
+  commandWriter [ PenDown
+                , Move (L, N)
+                , Move (R, N) ]
 
 
 initializeWriter :: IO Fd
@@ -24,6 +26,12 @@ initializeWriter = do
   return fd
   where
     path = "input"
+
+putCommands :: Fd -> [Command] -> IO ()
+putCommands _ [] = return ()
+putCommands fd (cmd:rest) = do
+  putCommand fd cmd
+  putCommands fd rest
 
 putCommand :: Fd -> Command -> IO ()
 putCommand fd command = do
