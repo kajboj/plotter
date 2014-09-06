@@ -17,7 +17,12 @@ main
  = do 
   commandWriter [ PenDown
                 , Move (L, N)
-                , Move (R, N) ]
+                , Move (L, R)
+                , Move (N, R)
+                , Move (R, N)
+                , Move (R, L)
+                , Move (N, L)
+                ]
 
 
 initializeWriter :: IO Fd

@@ -88,11 +88,12 @@ main
    withStore "global" animation
    where
      animation = do
+       fileHandle <- initializeReader
        animateIO (InWindow "Plotter" (800, 600) (5, 5))
                  black
          (frame (getValue "global" "plotter")
                 (putValue "global" "plotter")
-                commandReader)
+                (getCommand fileHandle))
 
 type Get a = IO (Maybe a)
 type Set a = a -> IO ()

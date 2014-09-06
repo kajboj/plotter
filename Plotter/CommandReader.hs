@@ -1,13 +1,8 @@
-module Plotter.CommandReader (commandReader) where
+module Plotter.CommandReader (initializeReader, getCommand) where
 
 import Plotter.Command
 import System.Posix.Files
 import System.IO
-
-commandReader :: IO Command
-commandReader = do
-  fd <- initializeReader    
-  getCommand fd
 
 initializeReader :: IO Handle
 initializeReader = do
