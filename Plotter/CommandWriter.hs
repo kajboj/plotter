@@ -15,7 +15,7 @@ commandWriter commands = do
 main :: IO ()
 main 
  = do 
-  commandWriter [ PenDown
+  commandWriter $ foldl1 (++) $ replicate 100 [ PenDown
                 , Move (L, N)
                 , Move (L, R)
                 , Move (N, R)
