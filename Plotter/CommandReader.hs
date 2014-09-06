@@ -19,9 +19,6 @@ getCommands = getCommands' 6
   where
     getCommands' 0 _ = return []
     getCommands' n fd =
-      --cmd <- getCommand fd
-      --rest <- getCommands' (n-1) fd
-      --return (cmd:rest)
       (:) <$> (getCommand fd) <*> (getCommands' (n-1) fd)
 
 getCommand :: Handle -> IO Command
