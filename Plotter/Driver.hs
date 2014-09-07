@@ -1,9 +1,28 @@
-module Plotter.Driver (commandSequence) where
+module Plotter.Driver (hpglToCommands, HPGLCommand(PD, PU, MV)) where
 
 import Plotter.Command
 import Plotter.Shared
 
 data HPGLCommand = PD | PU | MV (Float, Float)
+
+hpglToCommands :: [HPGLCommand] -> [Command]
+hpglToCommands hpglCommands = hpglToCommands' (0, 0) hpglCommands
+  where
+    hpglToCommands' prev [] = []
+    hpglToCommands' prev (hpglCommand:coms) = (commands ++ hpglToCommands' newPrev coms)
+      where
+        commands = case hpglCommand of
+          PD -> [PenDown]
+          PU -> [PenUp]
+          MV point -> lineSteps prev point
+        newPrev = case hpglCommand of
+          MV point -> point
+          _ -> prev
+
+lineSteps :: Point -> Point -> [Command]
+lineSteps start end = map Move steps
+  where
+    steps = calculateSteps leftSpoolPoint rightSpoolPoint start end
 
 lengthChange :: Point -> Point -> Point -> Point -> (Float, Float)
 lengthChange leftPoint rightPoint start target = (newLeft - oldLeft, newRight - oldRight)
@@ -65,37 +84,3 @@ rightRotation 0 = N
 rightRotation lengthChange = if lengthChange > 0
   then R
   else L
-
-
-hpgl = [ PD
-       , MV (-150, -100)
-       , PU
-       , MV (-150, 100)
-       , PD
-       , MV (-75, 100)
-       , MV (0, -100)
-       , MV (75, 100)
-       , MV (150, 100)
-       , MV (150, -100)
-       , MV (-100, -100) ]
-
-hpglToCommands :: [HPGLCommand] -> [Command]
-hpglToCommands hpglCommands = hpglToCommands' (0, 0) hpglCommands
-  where
-    hpglToCommands' prev [] = []
-    hpglToCommands' prev (hpglCommand:coms) = (commands ++ hpglToCommands' newPrev coms)
-      where
-        commands = case hpglCommand of
-          PD -> [PenDown]
-          PU -> [PenUp]
-          MV point -> lineSteps prev point
-        newPrev = case hpglCommand of
-          MV point -> point
-          _ -> prev
-
-commandSequence = hpglToCommands hpgl
-
-lineSteps :: Point -> Point -> [Command]
-lineSteps start end = map Move steps
-  where
-    steps = calculateSteps leftSpoolPoint rightSpoolPoint start end

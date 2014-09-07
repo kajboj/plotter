@@ -13,7 +13,7 @@ module Plotter.Shared ( pullPerStep
 import Graphics.Gloss.Data.Point
 import Data.Typeable
 
-degreesPerStep = 90 :: Float
+degreesPerStep = 1 :: Float
 spoolRadius = 10 :: Float
 leftSpoolPoint = (-250::Float, 200::Float)
 rightSpoolPoint = (250::Float, 200::Float)
