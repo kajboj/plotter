@@ -1,11 +1,8 @@
 module Plotter.CommandWriter (commandWriter) where
 
 import Plotter.Command
-import System.Posix.Files
 import System.Posix.IO
 import System.Posix.Types
-import System.IO
-import System.Directory
 
 commandWriter :: [Command] -> IO ()
 commandWriter commands = do
