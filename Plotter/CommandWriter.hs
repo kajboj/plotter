@@ -34,7 +34,8 @@ putCommands fd (cmd:rest) = do
 putCommand :: Fd -> Command -> IO ()
 putCommand fd command = do
   fdWrite fd (toString command)
-  putStrLn $ toString command
+  --putStrLn $ toString command
+  return ()
 
 toString :: Command -> String
 toString command = string ++ "\n"

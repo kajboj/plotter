@@ -15,7 +15,7 @@ initializeReader = do
     path = "input"
 
 getCommands :: Handle -> IO [Command]
-getCommands = getCommands' 6 
+getCommands = getCommands' 20
   where
     getCommands' 0 _ = return []
     getCommands' n fd =
@@ -30,7 +30,7 @@ getCommand fd = do
       return $ Move (N, N)
     else do
       line <- hGetLine fd
-      putStrLn line
+      --putStrLn line
       return $ toCommand line
 
 toCommand :: String -> Command

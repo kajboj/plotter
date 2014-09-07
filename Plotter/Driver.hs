@@ -5,19 +5,17 @@ import Plotter.Shared
 
 data HPGLCommand = PD | PU | MV (Float, Float)
 
-hpglToCommands :: [HPGLCommand] -> [Command]
-hpglToCommands hpglCommands = hpglToCommands' (0, 0) hpglCommands
+hpglToCommands :: MyPoint -> [HPGLCommand] -> [Command]
+hpglToCommands prev [] = []
+hpglToCommands prev (hpglCommand:coms) = (commands ++ hpglToCommands newPrev coms)
   where
-    hpglToCommands' prev [] = []
-    hpglToCommands' prev (hpglCommand:coms) = (commands ++ hpglToCommands' newPrev coms)
-      where
-        commands = case hpglCommand of
-          PD -> [PenDown]
-          PU -> [PenUp]
-          MV point -> lineSteps prev point
-        newPrev = case hpglCommand of
-          MV point -> point
-          _ -> prev
+    commands = case hpglCommand of
+      PD -> [PenDown]
+      PU -> [PenUp]
+      MV point -> lineSteps prev point
+    newPrev = case hpglCommand of
+      MV point -> point
+      _ -> prev
 
 lineSteps :: MyPoint -> MyPoint -> [Command]
 lineSteps start end = map Move steps
