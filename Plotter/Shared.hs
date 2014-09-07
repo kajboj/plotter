@@ -8,10 +8,11 @@ module Plotter.Shared ( pullPerStep
 
                       , distance
 
-                      , Point ) where
+                      , MyPoint ) where
 
-import Graphics.Gloss.Data.Point
 import Data.Typeable
+
+type MyPoint = (Float, Float)
 
 degreesPerStep = 1 :: Float
 spoolRadius = 10 :: Float
@@ -21,7 +22,7 @@ rightSpoolPoint = (250::Float, 200::Float)
 pullPerStep = (degreesPerStep / 360) * spoolCircumference
   where spoolCircumference = 2 * pi * spoolRadius
 
-distance :: Point -> Point -> Float
+distance :: MyPoint -> MyPoint -> Float
 distance (x1, y1) (x2, y2) = sqrt (x'*x' + y'*y')
     where 
         x' = x1 - x2

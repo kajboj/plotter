@@ -19,12 +19,12 @@ hpglToCommands hpglCommands = hpglToCommands' (0, 0) hpglCommands
           MV point -> point
           _ -> prev
 
-lineSteps :: Point -> Point -> [Command]
+lineSteps :: MyPoint -> MyPoint -> [Command]
 lineSteps start end = map Move steps
   where
     steps = calculateSteps leftSpoolPoint rightSpoolPoint start end
 
-lengthChange :: Point -> Point -> Point -> Point -> (Float, Float)
+lengthChange :: MyPoint -> MyPoint -> MyPoint -> MyPoint -> (Float, Float)
 lengthChange leftPoint rightPoint start target = (newLeft - oldLeft, newRight - oldRight)
   where
     oldLeft = distance leftPoint start
@@ -32,7 +32,7 @@ lengthChange leftPoint rightPoint start target = (newLeft - oldLeft, newRight - 
     newLeft = distance leftPoint target
     newRight = distance rightPoint target 
 
-calculateSteps :: Point -> Point -> Point -> Point -> [(Step, Step)]
+calculateSteps :: MyPoint -> MyPoint -> MyPoint -> MyPoint -> [(Step, Step)]
 calculateSteps leftPoint rightPoint start target =
   toSteps $ lengthChange leftPoint rightPoint start target
 
