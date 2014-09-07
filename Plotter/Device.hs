@@ -33,7 +33,7 @@ data Spool = Spool { point :: Point
 data Plotter = Plotter { left :: Spool  
                        , right :: Spool  
                        , marker :: Point
-                       , lines_ :: [(Point, Point)]
+                       , lines_ :: [[Point]]
                        , pen :: Pen
                        } deriving (Show, Typeable)
 
@@ -49,30 +49,28 @@ rightSpool = Spool { point = rightSpoolPoint
                    , pullSign = 1}
 
 nextPlotter :: Plotter -> Command -> Plotter
-nextPlotter plotter@(Plotter left' right' marker' lines_' pen') command = 
+nextPlotter plotter (Move (N, N)) = plotter
+
+nextPlotter plotter@(Plotter left right marker lines_ pen) PenUp = 
+  Plotter left right marker (lines_) Up
+
+nextPlotter plotter@(Plotter left right marker lines_ pen) PenDown = 
+  Plotter left right marker ([]:lines_) Down
+
+nextPlotter plotter@(Plotter left' right' marker' lines_' pen') (Move (l, r)) = 
   Plotter { left = newLeft
           , right = newRight
           , marker = newMarker
           , lines_ = newlines_
-          , pen = newPen }
+          , pen = pen' }
   where
-    newLeft = nextSpool left' leftCommand
-    newRight = nextSpool right' rightCommand
-    leftCommand = case command of 
-      Move (l, r) -> l
-      _ -> N
-    rightCommand = case command of 
-      Move (l, r) -> r
-      _ -> N
+    newLeft = nextSpool left' l
+    newRight = nextSpool right' r
     newMarker = intersectCircles (point newLeft) (string newLeft)
                                  (point newRight) (string newRight)
     newlines_ = case pen' of
       Up -> lines_'
-      Down -> (newMarker, marker'):lines_'
-    newPen = case command of
-      PenDown -> Down
-      PenUp -> Up
-      _ -> pen'
+      Down -> ((newMarker):(head lines_')):(tail lines_')
 
 nextSpool :: Spool -> Step -> Spool
 nextSpool spool@(Spool point' string' angle' pullSign') step =
@@ -116,7 +114,7 @@ frame getPlotter setPlotter getCommands timeS = do
         Nothing -> nextPlotter Plotter { left = leftSpool
                                        , right = rightSpool
                                        , marker = initialPosition
-                                       , lines_ = []
+                                       , lines_ = [[]]
                                        , pen = Up }
                                        PenUp
 
@@ -128,10 +126,10 @@ plotterPic plotter = Pictures [ spoolPic (left plotter)
                               , stringPic (point $ right plotter) (marker plotter)
                               , linePic (lines_ plotter) ]
 
-linePic :: [(Point, Point)] -> Picture
+linePic :: [[Point]] -> Picture
 linePic lines_ = Pictures $ map renderLine lines_
   where
-    renderLine (start, end) = Color white (line [start, end])
+    renderLine points = Color white (line points)
 
 spoolPic :: Spool -> Picture
 spoolPic spool = trans (point spool) (Rotate (angle spool) pic)
