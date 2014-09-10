@@ -1,16 +1,15 @@
 module Plotter.HpglParser (parseHPGL) where
 
+import Plotter.HpglCommand
 import Text.ParserCombinators.Parsec
 import Data.Char
 
-data HPGLCommand = PD | PU | MV (Float, Float) |
-  SC (Float, Float, Float, Float) deriving Show
 
 hpglFile = sepBy cmd (oneOf ";\n")
 cmd = try (string "PU" >> return [Just PU])
   <|> try (string "PD" >> return [Just PD])
-  <|> (string "PA" >> moves)
-  <|> (string "SC" >> scale)
+  <|> try (string "PA" >> moves)
+  <|> try (string "SC" >> scale)
   <|> ((many (noneOf ";")) >> return [Nothing])
 
 moves = sepBy pair (char ',')

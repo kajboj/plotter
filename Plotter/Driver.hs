@@ -1,21 +1,25 @@
-module Plotter.Driver (hpglToCommands, HPGLCommand(PD, PU, MV)) where
+module Plotter.Driver (hpglToCommands, HPGLCommand(PU, PD, MV, SC)) where
 
 import Plotter.Command
 import Plotter.Shared
+import Plotter.HpglCommand
 
-data HPGLCommand = PD | PU | MV (Float, Float)
+hpglToCommands :: MyPoint -> Bounds -> [HPGLCommand] -> [Command]
+hpglToCommands _ _ [] = []
 
-hpglToCommands :: MyPoint -> [HPGLCommand] -> [Command]
-hpglToCommands prev [] = []
-hpglToCommands prev (hpglCommand:coms) = (commands ++ hpglToCommands newPrev coms)
+hpglToCommands prev scale (PD:coms) = (PenDown:hpglToCommands prev scale coms)
+hpglToCommands prev scale (PU:coms) = (PenUp:hpglToCommands prev scale coms)
+hpglToCommands prev scale (SC newScale:coms) = hpglToCommands prev newScale coms
+hpglToCommands prev scale (MV point:coms) = moves ++ hpglToCommands scaledPoint scale coms
   where
-    commands = case hpglCommand of
-      PD -> [PenDown]
-      PU -> [PenUp]
-      MV point -> lineSteps prev point
-    newPrev = case hpglCommand of
-      MV point -> point
-      _ -> prev
+    moves = lineSteps prev scaledPoint
+    scaledPoint = scalePoint scale bounds point
+
+scalePoint :: Bounds -> Bounds -> MyPoint -> MyPoint
+scalePoint (sMinX, sMaxX, sMinY, sMaxY) (minX, maxX, minY, maxY) (x, y) =
+  (scale sMinX sMaxX minX maxX x, scale sMinY sMaxY minY maxY y)
+  where
+    scale sMin sMax min max v = min + (max-min)/(sMax-sMin) * (v - sMin)
 
 lineSteps :: MyPoint -> MyPoint -> [Command]
 lineSteps start end = map Move steps

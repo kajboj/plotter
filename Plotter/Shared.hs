@@ -7,17 +7,21 @@ module Plotter.Shared ( pullPerStep
                       , rightSpoolPoint
 
                       , distance
+                      , bounds
 
-                      , MyPoint ) where
+                      , MyPoint
+                      , Bounds ) where
 
 import Data.Typeable
 
 type MyPoint = (Float, Float)
+type Bounds = (Float, Float, Float, Float)
 
 degreesPerStep = 1 :: Float
 spoolRadius = 10 :: Float
-leftSpoolPoint = (-250::Float, 200::Float)
-rightSpoolPoint = (250::Float, 200::Float)
+leftSpoolPoint = (-250, 200)::MyPoint
+rightSpoolPoint = (250, 200)::MyPoint
+bounds = (-150, 150, -150, 150)::Bounds
 
 pullPerStep = (degreesPerStep / 360) * spoolCircumference
   where spoolCircumference = 2 * pi * spoolRadius
