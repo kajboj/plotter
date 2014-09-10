@@ -5,7 +5,7 @@ import Text.ParserCombinators.Parsec
 data HPGLCommand = PD | PU | MV (Float, Float) |
   SC (Float, Float, Float, Float) deriving Show
 
-hpglFile = endBy cmd (char ';')
+hpglFile = sepBy cmd (oneOf ";\n")
 cmd = try (string "PU" >> return [Just PU])
   <|> try (string "PD" >> return [Just PD])
   <|> try (string "PA" >> moves)
@@ -15,20 +15,17 @@ cmd = try (string "PU" >> return [Just PU])
 moves = sepBy pair (char ',')
 
 pair = do
-  x <- many digit
+  x <- fmap read $ many digit
   char ','
-  y <- many digit
-  return (Just $ MV (read x, read y))
+  y <- fmap read $ many digit
+  return (Just $ MV (x, y))
 
 scale = do
-  xMin <- many digit
-  char ','
-  xMax <- many digit
-  char ','
-  yMin <- many digit
-  char ','
-  yMax <- many digit
-  return [Just $ SC (read xMin, read xMax, read yMin, read yMax)]
+  a <- sepBy (fmap read $ many digit) (char ',')
+  return [Just $ SC ( a !! 0
+                    , a !! 1
+                    , a !! 2
+                    , a !! 3 )]
 
 parseHPGL :: String -> Either ParseError [HPGLCommand]
 parseHPGL input = fmap (filter . flatten) (parse hpglFile "(unknown)" input)
@@ -39,3 +36,9 @@ parseHPGL input = fmap (filter . flatten) (parse hpglFile "(unknown)" input)
         rejectNothings e a = case e of 
           Nothing -> a
           Just cmd -> (cmd:a)
+
+main = do
+  s <- getContents
+  case parseHPGL s of
+    Left error -> putStrLn (show error)
+    Right hpglCommands -> putStrLn (show hpglCommands)
