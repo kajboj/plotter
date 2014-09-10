@@ -1,6 +1,7 @@
 import Plotter.Driver
 import Plotter.CommandWriter
 import Plotter.Shared
+import Plotter.HpglParser
 
 
 hpgl = foldl1 (++) $ replicate 10 [ PU
@@ -17,4 +18,8 @@ hpgl = foldl1 (++) $ replicate 10 [ PU
 main :: IO ()
 main 
  = do 
-  commandWriter $ hpglToCommands (0, 0) (0, 0, 0, 0) hpgl
+  s <- getContents
+  case parseHPGL s of
+    Left error -> putStrLn (show error)
+    Right hpglCommands ->
+      commandWriter $ hpglToCommands (0, 0) (0, 0, 0, 0) hpglCommands
