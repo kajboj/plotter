@@ -1,4 +1,4 @@
-module Plotter.Driver (hpglToCommands, HPGLCommand(PU, PD, MV, SC)) where
+module Plotter.Driver (hpglToCommands, HPGLCommand(PU, PD, MV, SC), actualEndPoint) where
 
 import Plotter.Command
 import Plotter.Shared
@@ -12,7 +12,7 @@ hpglToCommands _ _ [] = []
 hpglToCommands prev scale (PD:moves) = (PenDown:hpglToCommands prev scale moves)
 hpglToCommands prev scale (PU:moves) = (PenUp:hpglToCommands prev scale moves)
 hpglToCommands prev scale (SC newScale:moves) = hpglToCommands prev newScale moves
-hpglToCommands prev scale (MV point:moves) = commands ++ hpglToCommands scaledPoint scale moves
+hpglToCommands prev scale (MV point:moves) = commands ++ hpglToCommands actualEndPoint scale moves
   where
     (commands, actualEndPoint) = lineSteps prev scaledPoint
     scaledPoint = scalePoint scale bounds point
@@ -24,9 +24,19 @@ scalePoint (sMinX, sMaxX, sMinY, sMaxY) (minX, maxX, minY, maxY) (x, y) =
     scale sMin sMax min max v = min + (max-min)/(sMax-sMin) * (v - sMin)
 
 lineSteps :: MyPoint -> MyPoint -> Line
-lineSteps start end = (map Move steps, end)
+lineSteps start end = (map Move steps, actualEndPoint start steps)
   where
     steps = calculateSteps leftSpoolPoint rightSpoolPoint start end
+
+actualEndPoint :: MyPoint -> [(Step, Step)] -> MyPoint
+actualEndPoint start steps = intersectCircles leftSpoolPoint newLeftRadius
+  rightSpoolPoint newRightRadius
+  where
+    (newLeftRadius, newRightRadius) = zipWith2 (+) delta startRadiuses
+    startRadiuses = apply2 (distance start) (leftSpoolPoint, rightSpoolPoint)
+    delta = zipWith2 (*) pullSigns $ apply2 ((*pullPerStep) . stepCount) (unzip steps)
+    stepCount = foldl addRotations 0
+    addRotations count step = count + rotationSign step
 
 lengthChange :: MyPoint -> MyPoint -> MyPoint -> MyPoint -> (Float, Float)
 lengthChange leftPoint rightPoint start target = (newLeft - oldLeft, newRight - oldRight)
