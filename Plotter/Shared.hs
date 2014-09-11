@@ -17,7 +17,7 @@ import Data.Typeable
 type MyPoint = (Float, Float)
 type Bounds = (Float, Float, Float, Float)
 
-degreesPerStep = 1 :: Float
+degreesPerStep = 2 :: Float
 spoolRadius = 10 :: Float
 leftSpoolPoint = (-250, 200)::MyPoint
 rightSpoolPoint = (250, 200)::MyPoint
