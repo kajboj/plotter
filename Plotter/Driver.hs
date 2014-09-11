@@ -4,15 +4,17 @@ import Plotter.Command
 import Plotter.Shared
 import Plotter.HpglCommand
 
+type Line = ([Command], MyPoint)
+
 hpglToCommands :: MyPoint -> Bounds -> [HPGLCommand] -> [Command]
 hpglToCommands _ _ [] = []
 
-hpglToCommands prev scale (PD:coms) = (PenDown:hpglToCommands prev scale coms)
-hpglToCommands prev scale (PU:coms) = (PenUp:hpglToCommands prev scale coms)
-hpglToCommands prev scale (SC newScale:coms) = hpglToCommands prev newScale coms
-hpglToCommands prev scale (MV point:coms) = moves ++ hpglToCommands scaledPoint scale coms
+hpglToCommands prev scale (PD:moves) = (PenDown:hpglToCommands prev scale moves)
+hpglToCommands prev scale (PU:moves) = (PenUp:hpglToCommands prev scale moves)
+hpglToCommands prev scale (SC newScale:moves) = hpglToCommands prev newScale moves
+hpglToCommands prev scale (MV point:moves) = commands ++ hpglToCommands scaledPoint scale moves
   where
-    moves = lineSteps prev scaledPoint
+    (commands, actualEndPoint) = lineSteps prev scaledPoint
     scaledPoint = scalePoint scale bounds point
 
 scalePoint :: Bounds -> Bounds -> MyPoint -> MyPoint
@@ -21,8 +23,8 @@ scalePoint (sMinX, sMaxX, sMinY, sMaxY) (minX, maxX, minY, maxY) (x, y) =
   where
     scale sMin sMax min max v = min + (max-min)/(sMax-sMin) * (v - sMin)
 
-lineSteps :: MyPoint -> MyPoint -> [Command]
-lineSteps start end = map Move steps
+lineSteps :: MyPoint -> MyPoint -> Line
+lineSteps start end = (map Move steps, end)
   where
     steps = calculateSteps leftSpoolPoint rightSpoolPoint start end
 
