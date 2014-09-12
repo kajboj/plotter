@@ -109,14 +109,13 @@ frame getPlotter setPlotter getCommands timeS = do
     where
       pic plotter = scale $ plotterPic plotter
       scale = Scale 1.2 1.2
-      plotter maybe = case maybe of
-        Just p -> p
-        Nothing -> nextPlotter Plotter { left = leftSpool
-                                       , right = rightSpool
-                                       , marker = initialPosition
-                                       , lines_ = [[]]
-                                       , pen = Up }
-                                       PenUp
+      plotter (Just p) = p
+      plotter Nothing = nextPlotter Plotter { left = leftSpool
+                                            , right = rightSpool
+                                            , marker = initialPosition
+                                            , lines_ = [[]]
+                                            , pen = Up }
+                                            PenUp
 
 plotterPic :: Plotter -> Picture
 plotterPic plotter = Pictures [ spoolPic (left plotter)
