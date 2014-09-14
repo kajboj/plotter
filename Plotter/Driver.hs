@@ -40,12 +40,9 @@ actualEndPoint start steps = intersectCircles leftSpoolPoint newLeftRadius
     addRotations count step = count + rotationSign step
 
 lengthChange :: MyPoint -> MyPoint -> MyPoint -> MyPoint -> (Float, Float)
-lengthChange leftPoint rightPoint start target = (newLeft - oldLeft, newRight - oldRight)
+lengthChange leftPoint rightPoint start target = (lengthDelta leftPoint, lengthDelta rightPoint)
   where
-    oldLeft = distance leftPoint start
-    oldRight = distance rightPoint start
-    newLeft = distance leftPoint target
-    newRight = distance rightPoint target 
+    lengthDelta point = (distance point target) - (distance point start)
 
 calculateSteps :: MyPoint -> MyPoint -> MyPoint -> MyPoint -> [(Step, Step)]
 calculateSteps leftPoint rightPoint start target =
