@@ -10,20 +10,40 @@ module Plotter.Shared ( pullPerStep
                       , bounds
                       , intersectCircles
                       , rotationSign
-                      , apply2
-                      , zipWith2
                       , pullSigns
+
+                      , hPair
+                      , getHPair
+                      , (<*>)
+                      , (<$>)
+                      , pure
 
                       , MyPoint
                       , Bounds ) where
 
 import Data.Typeable
 import Plotter.Command
+import Control.Applicative (Applicative, pure, (<*>), (<$>))
 
 type MyPoint = (Float, Float)
 type Bounds = (Float, Float, Float, Float)
 
-degreesPerStep = 1 :: Float
+newtype HPair a = HPair (a, a) deriving Show
+
+hPair :: (a, a) -> HPair a
+hPair (x, y) = HPair (x, y) 
+
+getHPair :: HPair a -> (a, a)
+getHPair (HPair x) = x
+
+instance Functor HPair where
+  fmap f (HPair (x, y)) = HPair (f x, f y)
+
+instance Applicative HPair where
+  pure x = HPair (x, x)
+  (<*>) (HPair (f, g)) (HPair (x, y)) = HPair (f x, g y)
+
+degreesPerStep = 0.1 :: Float
 spoolRadius = 10 :: Float
 leftSpoolPoint = (-250, 200)::MyPoint
 rightSpoolPoint = (250, 200)::MyPoint
@@ -50,12 +70,6 @@ intersectCircles (x0, y0) r0 (x1, y1) r1 = (x3, y3)
     h = sqrt (r0^2 - a^2)
     x2 = x0 + a * (x1 - x0) / d
     y2 = y0 + a * (y1 - y0) / d
-
-apply2 :: (a -> b) -> (a, a) -> (b, b)
-apply2 f (x, y) = (f x, f y)
-
-zipWith2 :: (a -> b -> c) -> (a, a) -> (b, b) -> (c, c)
-zipWith2 f (x1, y1) (x2, y2) = (f x1 x2, f y1 y2)
 
 rotationSign :: Step -> Float
 rotationSign L = -1

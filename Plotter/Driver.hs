@@ -32,9 +32,10 @@ actualEndPoint :: MyPoint -> [(Step, Step)] -> MyPoint
 actualEndPoint start steps = intersectCircles leftSpoolPoint newLeftRadius
   rightSpoolPoint newRightRadius
   where
-    (newLeftRadius, newRightRadius) = zipWith2 (+) delta startRadiuses
-    startRadiuses = apply2 (distance start) (leftSpoolPoint, rightSpoolPoint)
-    delta = zipWith2 (*) pullSigns $ apply2 ((*pullPerStep) . stepCount) (unzip steps)
+    (newLeftRadius, newRightRadius) = getHPair $ (+) <$> delta <*> startRadiuses
+    startRadiuses = distance start <$> hPair (leftSpoolPoint, rightSpoolPoint)
+    delta = (*) <$> (hPair pullSigns) <*> pulls
+    pulls = (*pullPerStep) . stepCount <$> (hPair $ unzip steps)
     stepCount = foldl addRotations 0
     addRotations count step = count + rotationSign step
 
