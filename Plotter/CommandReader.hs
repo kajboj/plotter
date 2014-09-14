@@ -15,7 +15,7 @@ initializeReader = do
     path = "input"
 
 getCommands :: Handle -> IO [Command]
-getCommands = getCommands' 20
+getCommands = getCommands' 20 
   where
     getCommands' 0 _ = return []
     getCommands' n fd =
