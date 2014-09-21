@@ -5,6 +5,7 @@ import Plotter.Shared
 import Plotter.HpglCommand
 
 type Line = ([Command], MyPoint)
+type DistanceCalc = MyPoint -> Float
 
 hpglToCommands :: MyPoint -> Bounds -> [HPGLCommand] -> [Command]
 hpglToCommands _ _ [] = []
@@ -26,7 +27,16 @@ scalePoint (sMinX, sMaxX, sMinY, sMaxY) (minX, maxX, minY, maxY) (x, y) =
 lineSteps :: MyPoint -> MyPoint -> Line
 lineSteps start end = (map Move steps, actualEndPoint start steps)
   where
-    steps = calculateSteps leftSpoolPoint rightSpoolPoint start end
+    --steps = calculateSteps leftSpoolPoint rightSpoolPoint start end
+    steps = toSteps1 (distance end) (distanceToLine start end) start
+
+distanceToLine :: MyPoint -> MyPoint -> MyPoint -> Float
+distanceToLine start end point = sqrt (a*a - d*d)
+  where
+    d = (a*a - b*b + c*c) / (2*c)
+    a = distance start point
+    b = distance end point
+    c = distance start end
 
 actualEndPoint :: MyPoint -> [(Step, Step)] -> MyPoint
 actualEndPoint start steps = intersectCircles leftSpoolPoint newLeftRadius
@@ -39,6 +49,31 @@ actualEndPoint start steps = intersectCircles leftSpoolPoint newLeftRadius
     stepCount = foldl addRotations 0
     addRotations count step = count + rotationSign step
 
+toSteps1 :: DistanceCalc -> DistanceCalc -> MyPoint -> [(Step, Step)]
+toSteps1 distToTarget distToLine current = if closeEnough
+  then []
+  else (next : toSteps1 distToTarget distToLine newPoint)
+  where
+    next = nextStep distToTarget distToLine 100 current
+    newPoint = nextPoint current next
+    closeEnough = (distToTarget current) <= (distToTarget newPoint)
+
+allSteps :: [(Step, Step)]
+allSteps = filter (/= (N, N)) [(x, y) | x <- [L, N, R], y <- [L, N, R]]
+
+nextStep :: DistanceCalc -> DistanceCalc -> Float -> MyPoint -> (Step, Step)
+nextStep distToTarget distToLine prevDistToTarget current = minBy d goodSteps
+  where
+    d = distToLine . nextPoint current
+    goodSteps = filter closerToTarget allSteps
+    closerToTarget steps = (distToTarget $ nextPoint current steps) < prevDistToTarget
+
+nextPoint :: MyPoint -> (Step, Step) -> MyPoint
+nextPoint point steps = actualEndPoint point [steps]
+
+minBy :: Ord b => (a -> b) -> [a] -> a
+minBy f = foldl1 (\x y -> if (f x) < (f y) then x else y)
+
 lengthChange :: MyPoint -> MyPoint -> MyPoint -> MyPoint -> (Float, Float)
 lengthChange leftPoint rightPoint start target = (lengthDelta leftPoint, lengthDelta rightPoint)
   where
@@ -47,6 +82,13 @@ lengthChange leftPoint rightPoint start target = (lengthDelta leftPoint, lengthD
 calculateSteps :: MyPoint -> MyPoint -> MyPoint -> MyPoint -> [(Step, Step)]
 calculateSteps leftPoint rightPoint start target =
   toSteps $ lengthChange leftPoint rightPoint start target
+
+toSteps :: (Float, Float) -> [(Step, Step)]
+toSteps (leftDelta, rightDelta) = intsToSteps steps ints
+  where
+    steps = (leftRotation leftDelta, rightRotation rightDelta)
+    ints = toInts (leftDelta, rightDelta)
+
 
 toInts :: (Float, Float) -> [(Int, Int)]
 toInts (leftDelta, rightDelta) = if leftSteps > rightSteps
@@ -78,12 +120,6 @@ stepify step (x:xs) = if x == 0
         s = if prev == x
           then N
           else step
-
-toSteps :: (Float, Float) -> [(Step, Step)]
-toSteps (leftDelta, rightDelta) = intsToSteps steps ints
-  where
-    steps = (leftRotation leftDelta, rightRotation rightDelta)
-    ints = toInts (leftDelta, rightDelta)
 
 leftRotation :: Float -> Step
 leftRotation 0 = N
