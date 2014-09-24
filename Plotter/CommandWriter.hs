@@ -1,46 +1,70 @@
 module Plotter.CommandWriter (commandWriter) where
 
 import Plotter.Command
+import Control.Concurrent
 import System.Posix.IO
 import System.Posix.Types
+import System.Posix.Terminal
+import System.IO
+import System.Serial
 
 commandWriter :: [Command] -> IO ()
 commandWriter commands = do
-  fd <- initializeWriter
-  putCommands fd commands
-  closeFd fd
+  pipeFd <- initializePipeWriter
+  serialHandle <- initializeSerialWriter
+  putCommands pipeFd serialHandle commands
+  closeFd pipeFd
+  hClose serialHandle
 
-initializeWriter :: IO Fd
-initializeWriter = do
+initializePipeWriter :: IO Fd
+initializePipeWriter = do
   fd <- openFd path WriteOnly Nothing defaultFileFlags
   return fd
   where
     path = "input"
 
-putCommands :: Fd -> [Command] -> IO ()
-putCommands _ [] = return ()
-putCommands fd (cmd:rest) = do
-  putCommand fd cmd
-  putCommands fd rest
+initializeSerialWriter :: IO Handle
+initializeSerialWriter = do
+  handle <- openSerial "/dev/ttyUSB1" B9600 8 One Even Software
+  putStrLn "waiting"
+  threadDelay 2000000
+  putStrLn "done waiting"
+  return handle
 
-putCommand :: Fd -> Command -> IO ()
-putCommand fd command = do
-  fdWrite fd (toString command)
+putCommands :: Fd -> Handle -> [Command] -> IO ()
+putCommands _ _ [] = return ()
+putCommands pipeFd serialHandle (cmd:rest) = do
+  putCommandToPipe pipeFd cmd
+  putCommandToSerial serialHandle cmd
+  putCommands pipeFd serialHandle rest
+
+putCommandToPipe :: Fd -> Command -> IO ()
+putCommandToPipe fd command = do
+  fdWrite fd $ toString command
   --putStrLn $ toString command
   return ()
 
+putCommandToSerial :: Handle -> Command -> IO ()
+putCommandToSerial handle command = do
+  hPutChar handle $ toChar command
+  hFlush handle
+  c <- hGetLine handle
+  hFlush handle
+  putStrLn c
+
 toString :: Command -> String
-toString command = string ++ "\n"
-  where
-    string = case command of
-      PenUp       -> "a"
-      PenDown     -> "b"
-      Move (L, N) -> "c"
-      Move (N, L) -> "d"
-      Move (R, N) -> "e"
-      Move (N, R) -> "f"
-      Move (L, R) -> "g"
-      Move (R, L) -> "h"
-      Move (L, L) -> "i"
-      Move (R, R) -> "j"
-      _           -> ""
+toString command = [toChar command] ++ "\n"
+
+toChar :: Command -> Char
+toChar command = case command of
+  PenUp       -> 'a'
+  PenDown     -> 'b'
+  Move (L, N) -> 'c'
+  Move (N, L) -> 'd'
+  Move (R, N) -> 'e'
+  Move (N, R) -> 'f'
+  Move (L, R) -> 'g'
+  Move (R, L) -> 'h'
+  Move (L, L) -> 'i'
+  Move (R, R) -> 'j'
+  _           -> ' '
