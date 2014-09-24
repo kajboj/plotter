@@ -10,14 +10,6 @@ commandWriter commands = do
   putCommands fd commands
   closeFd fd
 
---commandWriter $ foldl1 (++) $ replicate 10 [ PenDown
---                                           , Move (L, N)
---                                           , Move (L, R)
---                                           , Move (N, R)
---                                           , Move (R, N)
---                                           , Move (R, L)
---                                           , Move (N, L) ]
-
 initializeWriter :: IO Fd
 initializeWriter = do
   fd <- openFd path WriteOnly Nothing defaultFileFlags
