@@ -35,14 +35,14 @@ getCommand fd = do
 
 toCommand :: String -> Command
 toCommand s = case s of
-  "u"  -> PenUp
-  "d"  -> PenDown
-  "ln" -> Move (L, N)
-  "nl" -> Move (N, L)
-  "rn" -> Move (R, N)
-  "nr" -> Move (N, R)
-  "lr" -> Move (L, R)
-  "rl" -> Move (R, L)
-  "ll" -> Move (L, L)
-  "rr" -> Move (R, R)
-  _    -> Move (N, N)
+  "a" -> PenUp
+  "b" -> PenDown
+  "c" -> Move (L, N)
+  "d" -> Move (N, L)
+  "e" -> Move (R, N)
+  "f" -> Move (N, R)
+  "g" -> Move (L, R)
+  "h" -> Move (R, L)
+  "i" -> Move (L, L)
+  "j" -> Move (R, R)
+  _   -> Move (N, N)
