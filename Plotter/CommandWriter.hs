@@ -1,3 +1,5 @@
+ {-# LANGUAGE MultiParamTypeClasses #-}
+
 module Plotter.CommandWriter (commandWriter) where
 
 import Plotter.Command
@@ -7,6 +9,27 @@ import System.Posix.Types
 import System.Posix.Terminal
 import System.IO
 import System.Serial
+
+data OutputChannel = Pipe | Serial deriving Show
+
+class Writeable a where
+  writeCommand :: a -> Command -> IO ()
+
+class (Initializeable a b) where
+  initialize :: Writeable b => a -> IO b
+
+instance Initializeable OutputChannel b where
+  initialize Pipe = do
+    fd <- openFd path WriteOnly Nothing defaultFileFlags
+    return fd
+    where
+      path = "input"
+
+instance Writeable Fd where
+  writeCommand fd command = do
+    fdWrite fd $ toString command
+    --putStrLn $ toString command
+    return ()
 
 commandWriter :: [Command] -> IO ()
 commandWriter commands = do
