@@ -19,8 +19,9 @@ import System.IO.Storage
 import Data.Typeable
 
 
-initialPosition = (0, 0)
-canvasSize = (300, 300)
+initialPosition = (x1, y1)
+  where
+    (x1, x2, y1, y2) = bounds
 
 data Pen = Up | Down deriving (Show)
 
@@ -87,7 +88,7 @@ main
    where
      animation = do
        fileHandle <- initializeReader
-       animateIO (InWindow "Plotter" (800, 600) (5, 5))
+       animateIO (InWindow "Plotter" (683, 768) (0, 0))
                  black
          (frame (getValue "global" "plotter")
                 (putValue "global" "plotter")
@@ -107,8 +108,8 @@ frame getPlotter setPlotter getCommands timeS = do
   return $ pic $ transformPlotter commands (plotter maybe)
 
     where
-      pic plotter = scale $ plotterPic plotter
-      scale = Scale 1.2 1.2
+      pic plotter = scale $ trans (0, -80) $ plotterPic plotter
+      scale = Scale 1 1
       plotter (Just p) = p
       plotter Nothing = nextPlotter Plotter { left = leftSpool
                                             , right = rightSpool
@@ -147,5 +148,7 @@ trans (x, y) pic = Translate x y pic
 canvasPic :: Picture
 canvasPic = color (greyN 0.2) (rectangleWire width height)
   where
-    width = fst canvasSize
-    height = snd canvasSize
+    width = x2-x1
+    height = y2-y1
+    (x1, x2, y1, y2) = bounds
+

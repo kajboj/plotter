@@ -43,11 +43,11 @@ instance Applicative HPair where
   pure x = HPair (x, x)
   (<*>) (HPair (f, g)) (HPair (x, y)) = HPair (f x, g y)
 
-degreesPerStep = 1 :: Float
-spoolRadius = 10 :: Float
-leftSpoolPoint = (-250, 200)::MyPoint
-rightSpoolPoint = (250, 200)::MyPoint
-bounds = (-150, 150, -150, 150)::Bounds
+degreesPerStep = (4/2048 * 360) :: Float
+spoolRadius = 25 :: Float
+leftSpoolPoint = (-195, 362)::MyPoint
+rightSpoolPoint = (240, 362)::MyPoint
+bounds = (-90, 90, -90, 90)::Bounds
 pullSigns = (-1, 1)::(Float, Float)
 
 pullPerStep = (degreesPerStep / 360) * spoolCircumference

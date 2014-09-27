@@ -25,7 +25,7 @@ initializePipeWriter = do
 
 initializeSerialWriter :: IO Handle
 initializeSerialWriter = do
-  handle <- openSerial "/dev/ttyUSB1" B9600 8 One Even Software
+  handle <- openSerial "/dev/ttyUSB0" B115200 8 One Even Software
   putStrLn "waiting"
   threadDelay 2000000
   putStrLn "done waiting"

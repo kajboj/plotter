@@ -11,4 +11,5 @@ main = do
     Right hpglCommands -> do
       commandWriter $ commands hpglCommands
   where
-    commands hpglCommands = hpglToCommands (0, 0) (0, 0, 0, 0) hpglCommands
+    commands hpglCommands = hpglToCommands (x1, y1) (0, 0, 0, 0) hpglCommands
+    (x1, x2, y1, y2) = bounds
