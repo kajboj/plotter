@@ -45,8 +45,8 @@ instance Applicative HPair where
 
 degreesPerStep = (4/2048 * 360) :: Float
 spoolRadius = 25 :: Float
-leftSpoolPoint = (-195, 362)::MyPoint
-rightSpoolPoint = (240, 362)::MyPoint
+leftSpoolPoint = (-204, 315)::MyPoint
+rightSpoolPoint = (230, 315)::MyPoint
 bounds = (-90, 90, -90, 90)::Bounds
 pullSigns = (-1, 1)::(Float, Float)
 

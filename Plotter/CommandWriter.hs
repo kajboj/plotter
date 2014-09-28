@@ -25,7 +25,7 @@ initializePipeWriter = do
 
 initializeSerialWriter :: IO Handle
 initializeSerialWriter = do
-  handle <- openSerial "/dev/ttyUSB0" B115200 8 One Even Software
+  handle <- openSerial "/dev/ttyACM0" B115200 8 One NoParity Software
   putStrLn "waiting"
   threadDelay 2000000
   putStrLn "done waiting"
@@ -41,7 +41,6 @@ putCommands pipeFd serialHandle (cmd:rest) = do
 putCommandToPipe :: Fd -> Command -> IO ()
 putCommandToPipe fd command = do
   fdWrite fd $ toString command
-  --putStrLn $ toString command
   return ()
 
 putCommandToSerial :: Handle -> Command -> IO ()
