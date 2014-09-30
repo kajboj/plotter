@@ -43,7 +43,7 @@ instance Applicative HPair where
   pure x = HPair (x, x)
   (<*>) (HPair (f, g)) (HPair (x, y)) = HPair (f x, g y)
 
-degreesPerStep = (4/2048 * 360) :: Float
+degreesPerStep = (1/4076 * 360) :: Float
 spoolRadius = 25 :: Float
 leftSpoolPoint = (-198, 310)::MyPoint
 rightSpoolPoint = (235, 310)::MyPoint
