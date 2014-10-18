@@ -1,4 +1,4 @@
-module Plotter.Driver (hpglToCommands, HPGLCommand(PU, PD, MV, SC), actualEndPoint) where
+module Plotter.Driver (hpglToCommands, HPGLCommand(PU, PD, MV, SC)) where
 import Plotter.Command
 import Plotter.Shared
 import Plotter.HpglCommand
@@ -28,16 +28,14 @@ lineSteps start end = (map Move steps, endPoint)
   where
     (steps, endPoint) = calculateSteps1 start end (distanceToLine start end)
 
-actualEndPoint :: MyPoint -> [(Step, Step)] -> MyPoint
-actualEndPoint start steps = intersectCircles leftSpoolPoint newLeftRadius
+makeStep :: MyPoint -> (Step, Step) -> MyPoint
+makeStep start steps = intersectCircles leftSpoolPoint newLeftRadius
   rightSpoolPoint newRightRadius
   where
     (newLeftRadius, newRightRadius) = getHPair $ (+) <$> delta <*> startRadiuses
     startRadiuses = distance start <$> hPair (leftSpoolPoint, rightSpoolPoint)
     delta = (*) <$> (hPair pullSigns) <*> pulls
-    pulls = (*pullPerStep) . stepCount <$> (hPair $ unzip steps)
-    stepCount = foldl addRotations 0
-    addRotations count step = count + rotationSign step
+    pulls = (*pullPerStep) . rotationSign <$> (hPair $ steps)
 
 calculateSteps1:: MyPoint -> MyPoint -> (MyPoint -> Float) -> ([(Step, Step)], MyPoint)
 calculateSteps1 start target distToLine = case chooseSteps start target distToLine of 
@@ -49,8 +47,7 @@ chooseSteps :: MyPoint -> MyPoint -> (MyPoint -> Float) -> Maybe ((Step, Step), 
 chooseSteps start target distToLine = closestToLine (closerToTarget newPoints)
   where
     newPoints = zip possibleSteps $ map (makeStep start) possibleSteps
-    possibleSteps = [(L, L), (L, N), (L, R), (R, R), (R, N), (R, L)]
-    makeStep point steps = actualEndPoint point [steps]
+    possibleSteps = [(L, L),(L, N),(L, R),(N, L), (N, R),(R, L),(R, N),(R, R)]
     closerToTarget = filter (\ (_, p) -> startDistance > distance p target)
     closestToLine [] = Nothing
     closestToLine ps = Just $ minimumBy compareDistanceToLine ps
