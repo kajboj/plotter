@@ -47,7 +47,7 @@ degreesPerStep = (1/4076 * 360) :: Float
 spoolRadius = 25 :: Float
 leftSpoolPoint = (-198, 310)::MyPoint
 rightSpoolPoint = (235, 310)::MyPoint
-bounds = (-110, 110, -110, 110)::Bounds
+bounds = (-90, 90, -90, 90)::Bounds
 pullSigns = (-1, 1)::(Float, Float)
 
 pullPerStep = (degreesPerStep / 360) * spoolCircumference
