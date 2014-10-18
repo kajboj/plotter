@@ -1,8 +1,8 @@
 module Plotter.Driver (hpglToCommands, HPGLCommand(PU, PD, MV, SC), actualEndPoint) where
-
 import Plotter.Command
 import Plotter.Shared
 import Plotter.HpglCommand
+import Data.List (minimumBy)
 
 type Line = ([Command], MyPoint)
 
@@ -24,9 +24,9 @@ scalePoint (sMinX, sMaxX, sMinY, sMaxY) (minX, maxX, minY, maxY) (x, y) =
     scale sMin sMax min max v = min + (max-min)/(sMax-sMin) * (v - sMin)
 
 lineSteps :: MyPoint -> MyPoint -> Line
-lineSteps start end = (map Move steps, actualEndPoint start steps)
+lineSteps start end = (map Move steps, endPoint)
   where
-    steps = calculateSteps leftSpoolPoint rightSpoolPoint start end
+    (steps, endPoint) = calculateSteps1 start end (distanceToLine start end)
 
 actualEndPoint :: MyPoint -> [(Step, Step)] -> MyPoint
 actualEndPoint start steps = intersectCircles leftSpoolPoint newLeftRadius
@@ -39,60 +39,28 @@ actualEndPoint start steps = intersectCircles leftSpoolPoint newLeftRadius
     stepCount = foldl addRotations 0
     addRotations count step = count + rotationSign step
 
-lengthChange :: MyPoint -> MyPoint -> MyPoint -> MyPoint -> (Float, Float)
-lengthChange leftPoint rightPoint start target = (lengthDelta leftPoint, lengthDelta rightPoint)
+calculateSteps1:: MyPoint -> MyPoint -> (MyPoint -> Float) -> ([(Step, Step)], MyPoint)
+calculateSteps1 start target distToLine = case chooseSteps start target distToLine of 
+                                            Nothing -> ([], start)
+                                            Just (steps, newPoint) -> let (restOfSteps, endPoint) = calculateSteps1 newPoint target distToLine
+                                                                      in ((steps:restOfSteps), endPoint)
+
+chooseSteps :: MyPoint -> MyPoint -> (MyPoint -> Float) -> Maybe ((Step, Step), MyPoint)
+chooseSteps start target distToLine = closestToLine (closerToTarget newPoints)
   where
-    lengthDelta point = (distance point target) - (distance point start)
+    newPoints = zip possibleSteps $ map (makeStep start) possibleSteps
+    possibleSteps = [(L, L), (L, N), (L, R), (R, R), (R, N), (R, L)]
+    makeStep point steps = actualEndPoint point [steps]
+    closerToTarget = filter (\ (_, p) -> startDistance > distance p target)
+    closestToLine [] = Nothing
+    closestToLine ps = Just $ minimumBy compareDistanceToLine ps
+    compareDistanceToLine (_, p1) (_, p2) =
+      compare (distToLine p1) (distToLine p2)
+    startDistance = distance start target
 
-calculateSteps :: MyPoint -> MyPoint -> MyPoint -> MyPoint -> [(Step, Step)]
-calculateSteps leftPoint rightPoint start target =
-  toSteps $ lengthChange leftPoint rightPoint start target
-
-toInts :: (Float, Float) -> [(Int, Int)]
-toInts (leftDelta, rightDelta) = if leftSteps > rightSteps
-  then map (\i -> (i, r i)) [1..leftSteps]
-  else map (\i -> (r i, i)) [1..rightSteps]
+distanceToLine :: MyPoint -> MyPoint -> MyPoint -> Float
+distanceToLine (x1, y1) (x2, y2) (x, y) = (abs $ a*x + b*y + c) / (sqrt $ a^2 + b^2)
   where
-    leftSteps = abs $ round $ leftDelta / pullPerStep
-    rightSteps = abs $ round $ rightDelta / pullPerStep
-    minimum = min leftSteps rightSteps
-    maximum = max leftSteps rightSteps
-    x = (fromIntegral maximum) / (fromIntegral minimum)
-    r i = round (fromIntegral i / x)
-
-intsToSteps :: (Step, Step) -> [(Int, Int)] -> [(Step, Step)]
-intsToSteps (leftStep, rightStep) ints = zip (stepify leftStep left) (stepify rightStep right)
-  where
-    left = map fst ints
-    right = map snd ints
-
-stepify :: Step -> [Int] -> [Step]
-stepify step [] = []
-stepify step (x:xs) = if x == 0
-  then (N:stepify' 0 xs)
-  else stepify' (-1) (x:xs)
-  where
-    stepify' prev [] = []
-    stepify' prev (x:xs) = (s:stepify' x xs)
-      where
-        s = if prev == x
-          then N
-          else step
-
-toSteps :: (Float, Float) -> [(Step, Step)]
-toSteps (leftDelta, rightDelta) = intsToSteps steps ints
-  where
-    steps = (leftRotation leftDelta, rightRotation rightDelta)
-    ints = toInts (leftDelta, rightDelta)
-
-leftRotation :: Float -> Step
-leftRotation 0 = N
-leftRotation lengthChange = if lengthChange > 0
-  then L
-  else R
-
-rightRotation :: Float -> Step
-rightRotation 0 = N
-rightRotation lengthChange = if lengthChange > 0
-  then R
-  else L
+    a = y1-y2
+    b = x2-x1
+    c = (x1-x2)*y1 + (y2-y1)*x1
