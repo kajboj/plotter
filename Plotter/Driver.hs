@@ -23,10 +23,27 @@ scalePoint (sMinX, sMaxX, sMinY, sMaxY) (minX, maxX, minY, maxY) (x, y) =
   where
     scale sMin sMax min max v = min + (max-min)/(sMax-sMin) * (v - sMin)
 
+--lineSteps :: MyPoint -> MyPoint -> Line
+--lineSteps start end = (map Move steps, endPoint)
+--  where
+--    (steps, endPoint) = calculateSteps1 start end (distanceToLine start end)
+
 lineSteps :: MyPoint -> MyPoint -> Line
-lineSteps start end = (map Move steps, endPoint)
+lineSteps start end = (map Move steps, actualEndPoint start steps)
   where
-    (steps, endPoint) = calculateSteps1 start end (distanceToLine start end)
+    (steps, _) = calculateSteps1 start end (distanceToLine start end)
+
+actualEndPoint :: MyPoint -> [(Step, Step)] -> MyPoint
+actualEndPoint start steps = intersectCircles leftSpoolPoint newLeftRadius
+  rightSpoolPoint newRightRadius
+  where
+    (newLeftRadius, newRightRadius) = getHPair $ (+) <$> delta <*> startRadiuses
+    startRadiuses = distance start <$> hPair (leftSpoolPoint, rightSpoolPoint)
+    delta = (*) <$> (hPair pullSigns) <*> pulls
+    pulls = (*pullPerStep) . stepCount <$> (hPair $ unzip steps)
+    stepCount = foldl addRotations 0
+    addRotations count step = count + rotationSign step
+
 
 makeStep :: MyPoint -> (Step, Step) -> MyPoint
 makeStep start steps = intersectCircles leftSpoolPoint newLeftRadius
