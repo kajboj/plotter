@@ -15,8 +15,9 @@ drawPic rows = prefix (length $ head rows) (length rows) ++ body ++ suffix
     body = (zip [0..] rows) >>= \(i, row) -> drawRow i row
 
 drawRow :: Int -> [Int] -> [HPGLCommand]
-drawRow rowIndex colors = (zip [1..] colors) >>= pixel
+drawRow rowIndex colors = (zip indexes colors) >>= pixel
   where
+    indexes = [0..]
     pixel (i, color) = (penDowns color) ++ (move i)
     penDowns color = take (pdCount $ normal color) $ repeat PD
     move i = [PU, MV (toF i, toF rowIndex)]
