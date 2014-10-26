@@ -58,7 +58,7 @@ nextPlotter plotter@(Plotter left right marker dots lines_ pen) PenDown =
     newDots = case dots of
       [] -> [Dot 1 marker]
       ((Dot i point):rest) -> if point == marker
-        then ((Dot (i+1) marker):rest)
+        then ((Dot (i+1) marker):dots)
         else ((Dot 1 marker):dots)
 
 nextPlotter plotter@(Plotter left' right' marker' dots' lines_' pen') (Move (l, r)) = 
