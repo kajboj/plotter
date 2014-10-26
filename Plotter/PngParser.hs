@@ -1,3 +1,4 @@
+module Plotter.PngParser (parsePng) where
 import Codec.Picture
 
 parsePng :: String -> IO [[Int]]

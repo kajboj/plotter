@@ -1,18 +1,10 @@
-module Plotter.RasterDriver where
+module Plotter.RasterDriver (drawPic, gradient) where
 import Plotter.HpglCommand
 import Data.List
 
-maxIntensity = 64 :: Int
+maxIntensity = 256 :: Int
 maxPD = 300 :: Int
 toF = fromIntegral
-
---gradient :: Int -> Int -> [HPGLCommand]
---gradient width height = prefix width height ++ body ++ suffix
---  where
---    body = [0..width] >>= hpgl
---    hpgl i = (move i) ++ (penDown i)
---    move i = [PU, MV (toF i, 0)]
---    penDown i = take (pdCount (toF i/toF width)) $ repeat PD
 
 gradient :: Int -> Int -> [HPGLCommand]
 gradient width height = drawPic (map (\_ -> [0..width]) [0..height])
