@@ -2,16 +2,33 @@ module Plotter.RasterDriver where
 import Plotter.HpglCommand
 import Data.List
 
+maxIntensity = 64 :: Int
 maxPD = 300 :: Int
 toF = fromIntegral
 
+--gradient :: Int -> Int -> [HPGLCommand]
+--gradient width height = prefix width height ++ body ++ suffix
+--  where
+--    body = [0..width] >>= hpgl
+--    hpgl i = (move i) ++ (penDown i)
+--    move i = [PU, MV (toF i, 0)]
+--    penDown i = take (pdCount (toF i/toF width)) $ repeat PD
+
 gradient :: Int -> Int -> [HPGLCommand]
-gradient width height = prefix width height ++ body ++ suffix
+gradient width height = drawPic (map (\_ -> [0..width]) [0..height])
+
+drawPic :: [[Int]] -> [HPGLCommand]
+drawPic rows = prefix (length $ head rows) (length rows) ++ body ++ suffix
   where
-    body = [0..(width-1)] >>= hpgl
-    hpgl i = (move i) ++ (penDown i)
-    move i = [PU, MV (toF i, 0)]
-    penDown i = take (pdCount (toF i/toF width)) $ repeat PD
+    body = (zip [0..] rows) >>= \(i, row) -> drawRow i row
+
+drawRow :: Int -> [Int] -> [HPGLCommand]
+drawRow rowIndex colors = (zip [1..] colors) >>= pixel
+  where
+    pixel (i, color) = (penDowns color) ++ (move i)
+    penDowns color = take (pdCount $ normal color) $ repeat PD
+    move i = [PU, MV (toF i, toF rowIndex)]
+    normal color = toF color / toF maxIntensity
 
 pdCount :: Float -> Int
 pdCount x = round (fromAscii table x * toF maxPD)
