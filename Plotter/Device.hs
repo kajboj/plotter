@@ -1,11 +1,3 @@
--- to do:
---
--- * change L, R to U, D
--- * make model more precise by calculating exact point on the spool where
---   string unravels
--- * split into multiple files: model, driver, parser
--- * why is driver so ugly and long?
-
 {-# LANGUAGE DeriveDataTypeable #-}
 
 module Plotter.Device (main) where
@@ -23,6 +15,10 @@ initialPosition = (x1, y1)
   where
     (x1, x2, y1, y2) = bounds
 
+inkDispersion = 0.008
+
+data Dot = Dot Int Point deriving Show
+
 data Pen = Up | Down deriving (Show)
 
 data Spool = Spool { point :: Point
@@ -34,6 +30,7 @@ data Spool = Spool { point :: Point
 data Plotter = Plotter { left :: Spool  
                        , right :: Spool  
                        , marker :: Point
+                       , dots :: [Dot]
                        , lines_ :: [[Point]]
                        , pen :: Pen
                        } deriving (Show, Typeable)
@@ -52,16 +49,23 @@ rightSpool = Spool { point = rightSpoolPoint
 nextPlotter :: Plotter -> Command -> Plotter
 nextPlotter plotter (Move (N, N)) = plotter
 
-nextPlotter plotter@(Plotter left right marker lines_ pen) PenUp = 
-  Plotter left right marker (lines_) Up
+nextPlotter plotter@(Plotter left right marker dots lines_ pen) PenUp = 
+  Plotter left right marker dots lines_ Up
 
-nextPlotter plotter@(Plotter left right marker lines_ pen) PenDown = 
-  Plotter left right marker ([]:lines_) Down
+nextPlotter plotter@(Plotter left right marker dots lines_ pen) PenDown = 
+  Plotter left right marker newDots ([]:lines_) Down
+  where
+    newDots = case dots of
+      [] -> [Dot 1 marker]
+      ((Dot i point):rest) -> if point == marker
+        then ((Dot (i+1) marker):rest)
+        else ((Dot 1 marker):dots)
 
-nextPlotter plotter@(Plotter left' right' marker' lines_' pen') (Move (l, r)) = 
+nextPlotter plotter@(Plotter left' right' marker' dots' lines_' pen') (Move (l, r)) = 
   Plotter { left = newLeft
           , right = newRight
           , marker = newMarker
+          , dots = dots'
           , lines_ = newlines_
           , pen = pen' }
   where
@@ -114,6 +118,7 @@ frame getPlotter setPlotter getCommands timeS = do
       plotter Nothing = nextPlotter Plotter { left = leftSpool
                                             , right = rightSpool
                                             , marker = initialPosition
+                                            , dots = []
                                             , lines_ = [[]]
                                             , pen = Up }
                                             PenUp
@@ -124,7 +129,8 @@ plotterPic plotter = Pictures [ spoolPic (left plotter)
                               , canvasPic
                               , stringPic (point $ left plotter) (marker plotter)
                               , stringPic (point $ right plotter) (marker plotter)
-                              , linePic (lines_ plotter) ]
+                              , linePic (lines_ plotter)
+                              , dotsPic (dots plotter)]
 
 linePic :: [[Point]] -> Picture
 linePic lines_ = Pictures $ map renderLine lines_
@@ -141,6 +147,13 @@ stringPic :: Point -> Point -> Picture
 stringPic (spoolX, spoolY) end = Color (greyN 0.4) (line [start, end])
   where
     start = (spoolX, spoolY - spoolRadius)
+
+dotsPic :: [Dot] -> Picture
+dotsPic [] = Pictures []
+dotsPic dots = Pictures (map dotPic dots)
+
+dotPic :: Dot -> Picture
+dotPic (Dot size point) = trans point $ Pictures [Color white (circle $ (fromIntegral size)*inkDispersion)]
 
 trans :: Point -> Picture -> Picture
 trans (x, y) pic = Translate x y pic
