@@ -1,6 +1,9 @@
 #define STEPS_PER_REV 4076
 #define STATE_COUNT 8
 #define WAIT 2
+#define PEN_UP_WAIT 1000
+#define PEN_DOWN_WAIT 200
+
 #define STEP_COUNT 1
 
 #define LEFT_MOTOR 0
@@ -93,12 +96,12 @@ void rr() { makeSteps(STEP_COUNT, motorRight, motorRight); }
 
 void penUp() {
   digitalWrite(PEN_PIN, LOW);
-  delay(100);
+  delay(PEN_UP_WAIT);
 }
 
 void penDown() {
   digitalWrite(PEN_PIN, HIGH);
-  delay(100);
+  delay(PEN_DOWN_WAIT);
 }
 
 void dispatch(char c) {
