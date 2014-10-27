@@ -3,7 +3,7 @@ import Plotter.HpglCommand
 import Data.List
 
 maxIntensity = 255 :: Int
-maxZigs = 4 :: Int
+maxZigs = 1 :: Int
 toF = fromIntegral
 
 gradient :: Int -> Int -> [HPGLCommand]
@@ -58,7 +58,7 @@ drawGray3 (x, y) color = map MV coords
     zigz = map toF [1..zigCount] >>= zig
     zig i = [((i-1)*zigDelta, color), (i*zigDelta, 0)]
     zigDelta = 1 / (toF zigCount)
-    zigCount = 4
+    zigCount = maxZigs
 
 prefix :: Int -> Int -> [HPGLCommand]
 prefix width height = [SC (0, toF height, 0, toF width), PD]
