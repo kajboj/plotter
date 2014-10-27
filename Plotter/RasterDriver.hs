@@ -3,7 +3,7 @@ import Plotter.HpglCommand
 import Data.List
 
 maxIntensity = 255 :: Int
-maxPD = 300 :: Int
+maxZigs = 4 :: Int
 toF = fromIntegral
 
 gradient :: Int -> Int -> [HPGLCommand]
@@ -35,16 +35,33 @@ drawRow :: Int -> [Int] -> [HPGLCommand]
 drawRow rowIndex colors = (dir $ zip [0..] colors) >>= pixel
   where
     dir = if even rowIndex then id else reverse
-    pixel (i, color) = (move i) ++ (penDowns color)
-    penDowns color = take (pdCount $ normal color) $ repeat PD
-    move i = [PU, MV (toF i, toF rowIndex)]
+    pixel (i, color) = dir ((move i) ++ (drawGray3 (point i) (normal color)))
+    move i = [MV $ point i]
+    point i = (toF i, toF rowIndex)
     normal color = toF color / toF maxIntensity
 
-pdCount :: Float -> Int
-pdCount x = round (fromAscii table x * toF maxPD)
+drawGray1 :: (Float, Float) -> Float -> [HPGLCommand]
+drawGray1 (x, y) color = map MV coords
+  where
+    coords = map (\(x1, y1) -> (x+color*x1, y+color*y1)) [(1, 0), (1, 1), (0, 1), (0, 0)]
+
+drawGray2 :: (Float, Float) -> Float -> [HPGLCommand]
+drawGray2 (x, y) color = map MV coords
+  where
+    coords = [(x+color, y+color)]
+
+drawGray3 :: (Float, Float) -> Float -> [HPGLCommand]
+drawGray3 (x, y) color = map MV coords
+  where
+    coords = map f zigz
+    f (x1, y1) = (x+x1, y+y1)
+    zigz = map toF [1..zigCount] >>= zig
+    zig i = [((i-1)*zigDelta, color), (i*zigDelta, 0)]
+    zigDelta = 1 / (toF zigCount)
+    zigCount = 4
 
 prefix :: Int -> Int -> [HPGLCommand]
-prefix width height = [SC (0, toF height, 0, toF width)]
+prefix width height = [SC (0, toF height, 0, toF width), PD]
 
 suffix :: [HPGLCommand]
 suffix = [PU, MV (0, 0)]
