@@ -12,8 +12,8 @@ parsePng filepath = do
 process :: DynamicImage -> [[Int]]
 process (ImageRGB8 image) = map (map gray) coords
   where
-    gray (y, x) = case pixelAt image x y of
+    gray (x, y) = case pixelAt image x y of
       PixelRGB8 r _ _ -> fromIntegral r
 
-    coords = reverse (map row [0..imageHeight image - 1])
+    coords = map row [0..imageHeight image - 1]
     row i = map (\col -> (i, col)) [0..imageWidth image - 1]

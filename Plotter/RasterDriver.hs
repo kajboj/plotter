@@ -2,23 +2,33 @@ module Plotter.RasterDriver (drawPic, gradient) where
 import Plotter.HpglCommand
 import Data.List
 
-maxIntensity = 256 :: Int
+maxIntensity = 255 :: Int
 maxPD = 300 :: Int
 toF = fromIntegral
 
 gradient :: Int -> Int -> [HPGLCommand]
 gradient width height = drawPic (map (\_ -> [0..width]) [0..height])
 
-drawPic :: [[Int]] -> [HPGLCommand]
-drawPic rows = prefix (length $ head rows) (length rows) ++ body ++ suffix
+rotateClockwise :: [[Int]] -> [[Int]]
+rotateClockwise = reverse . rotateAntiClockwise
+
+rotateAntiClockwise :: [[Int]] -> [[Int]]
+rotateAntiClockwise ([]:_) = []
+rotateAntiClockwise rows = (heads rows:(rotateAntiClockwise $ tails rows))
   where
-    body = (zip [0..] rows) >>= \(i, row) -> drawRow i row
+    heads = map head
+    tails = map tail
+
+drawPic :: [[Int]] -> [HPGLCommand]
+drawPic rows = prefix (length $ head rows') (length rows') ++ body ++ suffix
+  where
+    rows' = rotateClockwise rows
+    body = (zip [0..] rows') >>= \(i, row) -> drawRow i row
 
 drawRow :: Int -> [Int] -> [HPGLCommand]
-drawRow rowIndex colors = (zip indexes colors) >>= pixel
+drawRow rowIndex colors = zip [0..] colors >>= pixel
   where
-    indexes = [0..]
-    pixel (i, color) = (penDowns color) ++ (move i)
+    pixel (i, color) = (move i) ++ (penDowns color)
     penDowns color = take (pdCount $ normal color) $ repeat PD
     move i = [PU, MV (toF i, toF rowIndex)]
     normal color = toF color / toF maxIntensity
@@ -27,7 +37,7 @@ pdCount :: Float -> Int
 pdCount x = round (fromAscii table x * toF maxPD)
 
 prefix :: Int -> Int -> [HPGLCommand]
-prefix width height = [SC (0, toF width, 0, toF height)]
+prefix width height = [SC (0, toF height, 0, toF width)]
 
 suffix :: [HPGLCommand]
 suffix = [PU, MV (0, 0)]
