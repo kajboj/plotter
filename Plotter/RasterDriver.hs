@@ -1,4 +1,4 @@
-module Plotter.RasterDriver (drawPic, gradient) where
+module Plotter.RasterDriver (drawPic, gradient, testImage) where
 import Plotter.HpglCommand
 import Data.List
 
@@ -8,6 +8,12 @@ toF = fromIntegral
 
 gradient :: Int -> Int -> [HPGLCommand]
 gradient width height = drawPic (map (\_ -> [0..width]) [0..height])
+
+testImage :: [[Int]]
+testImage = [ [255,  16,  16,  16]
+            , [16,  255,  16,  16]
+            , [16,   16, 255,  16]
+            , [16,   16,  16, 255]]
 
 rotateClockwise :: [[Int]] -> [[Int]]
 rotateClockwise = reverse . rotateAntiClockwise
@@ -26,8 +32,9 @@ drawPic rows = prefix (length $ head rows') (length rows') ++ body ++ suffix
     body = (zip [0..] rows') >>= \(i, row) -> drawRow i row
 
 drawRow :: Int -> [Int] -> [HPGLCommand]
-drawRow rowIndex colors = zip [0..] colors >>= pixel
+drawRow rowIndex colors = (dir $ zip [0..] colors) >>= pixel
   where
+    dir = if even rowIndex then id else reverse
     pixel (i, color) = (move i) ++ (penDowns color)
     penDowns color = take (pdCount $ normal color) $ repeat PD
     move i = [PU, MV (toF i, toF rowIndex)]
