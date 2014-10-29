@@ -6,7 +6,7 @@ import Control.Monad.State
 
 maxIntensity = 255 :: Int
 maxZigs = 1 :: Int
-spikeCount = 4 :: Int
+spikeCount = 8 :: Int
 toF = fromIntegral
 
 testImage :: [[Int]]
@@ -55,7 +55,7 @@ randomSpike length = liftM2 (,) (randomVal length) (randomVal length)
 randomVal :: Float -> State StdGen Float
 randomVal radius = do 
   rndGen <- get
-  let (rndVal, rndGen') = randomR (-radius/2, radius/2) rndGen
+  let (rndVal, rndGen') = randomR (-radius, radius) rndGen
   put rndGen'
   return rndVal
 
