@@ -1,13 +1,13 @@
-module Plotter.RasterDriver (drawPic, gradient, testImage) where
+module Plotter.RasterDriver (drawPic, testImage) where
 import Plotter.HpglCommand
 import Data.List
+import System.Random
+import Control.Monad.State
 
 maxIntensity = 255 :: Int
 maxZigs = 1 :: Int
+spikeCount = 4 :: Int
 toF = fromIntegral
-
-gradient :: Int -> Int -> [HPGLCommand]
-gradient width height = drawPic (map (\_ -> [0..width]) [0..height])
 
 testImage :: [[Int]]
 testImage = [ [255,  16,  16,  16]
@@ -25,20 +25,44 @@ rotateAntiClockwise rows = (heads rows:(rotateAntiClockwise $ tails rows))
     heads = map head
     tails = map tail
 
-drawPic :: [[Int]] -> [HPGLCommand]
-drawPic rows = prefix (length $ head rows') (length rows') ++ body ++ suffix
+drawPic :: [[Int]] -> State StdGen [HPGLCommand]
+drawPic rows = do
+  b <- liftM concat $ sequence body
+  return $ pref ++ b ++ suffix
   where
+    pref = prefix (length $ head rows') (length rows')
     rows' = rotateClockwise rows
-    body = (zip [0..] rows') >>= \(i, row) -> drawRow i row
+    body = map (\(i, row) -> drawRow i row) (zipIndex rows')
 
-drawRow :: Int -> [Int] -> [HPGLCommand]
-drawRow rowIndex colors = (dir $ zip [0..] colors) >>= pixel
+drawRow :: Int -> [Int] -> State StdGen [HPGLCommand]
+drawRow rowIndex colors = liftM concat $ sequence $ map pixel (dir $ zipIndex colors)
   where
     dir = if even rowIndex then id else reverse
-    pixel (i, color) = dir ((move i) ++ (drawGray3 (point i) (normal color)))
+    pixel (i, color) = liftM ((move i) ++) (drawGray0 (point i) (normal color))
     move i = [MV $ point i]
     point i = (toF i, toF rowIndex)
     normal color = toF color / toF maxIntensity
+
+drawGray0 :: (Float, Float) -> Float -> State StdGen [HPGLCommand]
+drawGray0 (x, y) color = liftM (map MV) coords
+  where
+    coords = mapM randomSpike (replicate spikeCount color) >>= (return . flip (>>=) applySpike)
+    applySpike (x1, y1) = [(x+x1, y+y1), (x,y)]
+
+randomSpike :: Float -> State StdGen (Float, Float)
+randomSpike length = liftM2 (,) (randomVal length) (randomVal length)
+
+randomVal :: Float -> State StdGen Float
+randomVal radius = do 
+  rndGen <- get
+  let (rndVal, rndGen') = randomR (-radius/2, radius/2) rndGen
+  put rndGen'
+  return rndVal
+
+normalize :: (Float, Float) -> (Float, Float)
+normalize (x, y) = (x/length, y/length)
+  where
+    length = sqrt $ x^2 + y^2
 
 drawGray1 :: (Float, Float) -> Float -> [HPGLCommand]
 drawGray1 (x, y) color = map MV coords
@@ -65,6 +89,9 @@ prefix width height = [SC (0, toF height, 0, toF width), PD]
 
 suffix :: [HPGLCommand]
 suffix = [PU, MV (0, 0)]
+
+zipIndex :: [a] -> [(Int, a)]
+zipIndex = zip [0..]
 
 putCurve :: [String] -> IO ()
 putCurve curve = mapM_ putStrLn curve
