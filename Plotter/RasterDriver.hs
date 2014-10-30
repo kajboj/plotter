@@ -6,7 +6,7 @@ import Control.Monad.State
 
 maxIntensity = 255 :: Int
 maxZigs = 1 :: Int
-spikeCount = 4 :: Int
+spikeCount = 6 :: Int
 toF = fromIntegral
 
 testImage :: [[Int]]
@@ -38,7 +38,7 @@ drawRow :: Int -> [Int] -> State StdGen [HPGLCommand]
 drawRow rowIndex colors = liftM concat $ sequence $ map pixel (dir $ zipIndex colors)
   where
     dir = if even rowIndex then id else reverse
-    pixel (i, color) = liftM ((move i) ++) (drawGray0 (point i) (normal color))
+    pixel (i, color) = liftM ((move i) ++) (drawGray1 (point i) (normal color))
     move i = [MV $ point i]
     point i = (toF i, toF rowIndex)
     normal color = toF color / toF maxIntensity
@@ -49,6 +49,14 @@ drawGray0 (x, y) color = liftM (map MV) coords
     coords = mapM randomSpike (replicate spikeCount (1-color)) >>= (return . flip (>>=) applySpike)
     applySpike (x1, y1) = [(x+x1, y+y1), (x,y)]
 
+drawGray1 :: (Float, Float) -> Float -> State StdGen [HPGLCommand]
+drawGray1 (x, y) color = liftM (map MV) coords
+  where
+    coords = mapM randomSpike (replicate spikeCount (1-color)) >>= (return . flip (>>=) applySpike)
+    applySpike (x1, y1) = [(x+x1, y+y1)]
+
+-- There is a bug in this implementation - spike is never normalized
+-- to length equal to color intensity.
 randomSpike :: Float -> State StdGen (Float, Float)
 randomSpike length = liftM2 (,) (randomVal length) (randomVal length)
 
