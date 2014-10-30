@@ -6,7 +6,7 @@ import Control.Monad.State
 
 maxIntensity = 255 :: Int
 maxZigs = 1 :: Int
-spikeCount = 8 :: Int
+spikeCount = 4 :: Int
 toF = fromIntegral
 
 testImage :: [[Int]]
@@ -46,7 +46,7 @@ drawRow rowIndex colors = liftM concat $ sequence $ map pixel (dir $ zipIndex co
 drawGray0 :: (Float, Float) -> Float -> State StdGen [HPGLCommand]
 drawGray0 (x, y) color = liftM (map MV) coords
   where
-    coords = mapM randomSpike (replicate spikeCount color) >>= (return . flip (>>=) applySpike)
+    coords = mapM randomSpike (replicate spikeCount (1-color)) >>= (return . flip (>>=) applySpike)
     applySpike (x1, y1) = [(x+x1, y+y1), (x,y)]
 
 randomSpike :: Float -> State StdGen (Float, Float)
