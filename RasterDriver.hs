@@ -12,8 +12,8 @@ main = do
   args <- getArgs
   image <- parsePng (head args)
   rndGen <- getStdGen
-  commandWriter $ commands (fst $ runState (drawPic image) rndGen)
-  --commandWriter $ commands (fst $ runState (drawPic testImage) rndGen)
+  --commandWriter $ commands (fst $ runState (drawPic $ rowTraversal image) rndGen)
+  commandWriter $ commands (fst $ runState (drawPic $ rowTraversal testImage) rndGen)
   where
     commands hpglCommands = hpglToCommands (x1, y1) (0, 0, 0, 0) hpglCommands
     (x1, x2, y1, y2) = bounds

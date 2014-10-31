@@ -1,56 +1,48 @@
-module Plotter.RasterDriver (drawPic, testImage) where
+module Plotter.RasterDriver (drawPic, rowTraversal, Picture) where
 import Plotter.HpglCommand
 import Data.List
 import System.Random
 import Control.Monad.State
 
-maxIntensity = 255 :: Int
-maxZigs = 1 :: Int
 spikeCount = 6 :: Int
 toF = fromIntegral
 
-testImage :: [[Int]]
-testImage = [ [255,  16,  16,  16]
-            , [16,  255,  16,  16]
-            , [16,   16, 255,  16]
-            , [16,   16,  16, 255]]
+type Color = Float
+type Picture = [[Color]]
+type Coords = (Float, Float)
+type Pixel = (Coords, Color)
+type Width = Int
+type Height = Int
+type Traversal = (Width, Height, [Pixel])
 
-rotateClockwise :: [[Int]] -> [[Int]]
-rotateClockwise = reverse . rotateAntiClockwise
+rowTraversal :: Picture -> Traversal
+rowTraversal pic =
+  let sequence = [((toF j, toF i), color) | (i, row) <- zipI pic, (j, color) <- dir i $ zipI row ]
+      dir rowIndex = if even rowIndex then id else reverse
+      height = length pic
+      width = length $ head pic
+  in (width, height, sequence)
 
-rotateAntiClockwise :: [[Int]] -> [[Int]]
-rotateAntiClockwise ([]:_) = []
-rotateAntiClockwise rows = (heads rows:(rotateAntiClockwise $ tails rows))
+drawPic :: Traversal -> State StdGen [HPGLCommand]
+drawPic (width, height, pixels) = liftM applyEnvelope $ body pixels
   where
-    heads = map head
-    tails = map tail
+    applyEnvelope body = pref ++ body ++ suffix
+    pref = prefix width height
 
-drawPic :: [[Int]] -> State StdGen [HPGLCommand]
-drawPic rows = do
-  b <- liftM concat $ sequence body
-  return $ pref ++ b ++ suffix
+body :: [Pixel] -> State StdGen [HPGLCommand]
+body pixels = liftM concat $ sequence $ map pix pixels
   where
-    pref = prefix (length $ head rows') (length rows')
-    rows' = rotateClockwise rows
-    body = map (\(i, row) -> drawRow i row) (zipIndex rows')
+    pix pixel@(point, color) = liftM (move point:) (randomStar pixel)
+    move point = MV $ point
 
-drawRow :: Int -> [Int] -> State StdGen [HPGLCommand]
-drawRow rowIndex colors = liftM concat $ sequence $ map pixel (dir $ zipIndex colors)
-  where
-    dir = if even rowIndex then id else reverse
-    pixel (i, color) = liftM ((move i) ++) (drawGray1 (point i) (normal color))
-    move i = [MV $ point i]
-    point i = (toF i, toF rowIndex)
-    normal color = toF color / toF maxIntensity
-
-drawGray0 :: (Float, Float) -> Float -> State StdGen [HPGLCommand]
-drawGray0 (x, y) color = liftM (map MV) coords
+randomStar :: Pixel -> State StdGen [HPGLCommand]
+randomStar ((x, y), color) = liftM (map MV) coords
   where
     coords = mapM randomSpike (replicate spikeCount (1-color)) >>= (return . flip (>>=) applySpike)
     applySpike (x1, y1) = [(x+x1, y+y1), (x,y)]
 
-drawGray1 :: (Float, Float) -> Float -> State StdGen [HPGLCommand]
-drawGray1 (x, y) color = liftM (map MV) coords
+randomWalk :: Pixel -> State StdGen [HPGLCommand]
+randomWalk ((x, y), color) = liftM (map MV) coords
   where
     coords = mapM randomSpike (replicate spikeCount (1-color)) >>= (return . flip (>>=) applySpike)
     applySpike (x1, y1) = [(x+x1, y+y1)]
@@ -78,5 +70,5 @@ prefix width height = [SC (0, toF height, 0, toF width), PD]
 suffix :: [HPGLCommand]
 suffix = [PU, MV (0, 0)]
 
-zipIndex :: [a] -> [(Int, a)]
-zipIndex = zip [0..]
+zipI :: [a] -> [(Int, a)]
+zipI = zip [0..]
