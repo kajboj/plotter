@@ -1,4 +1,4 @@
-module Plotter.RasterDriver (drawPic, rowTraversal, Picture) where
+module Plotter.RasterDriver (drawPic, rowTraversal, Picture, Traversal) where
 import Plotter.HpglCommand
 import Data.List
 import System.Random
@@ -32,7 +32,7 @@ drawPic (width, height, pixels) = liftM applyEnvelope $ body pixels
 body :: [Pixel] -> State StdGen [HPGLCommand]
 body pixels = liftM concat $ sequence $ map pix pixels
   where
-    pix pixel@(point, color) = liftM (move point:) (randomStar pixel)
+    pix pixel@(point, color) = liftM (move point:) (randomWalk pixel)
     move point = MV $ point
 
 randomStar :: Pixel -> State StdGen [HPGLCommand]
@@ -47,8 +47,6 @@ randomWalk ((x, y), color) = liftM (map MV) coords
     coords = mapM randomSpike (replicate spikeCount (1-color)) >>= (return . flip (>>=) applySpike)
     applySpike (x1, y1) = [(x+x1, y+y1)]
 
--- There is a bug in this implementation - spike is never normalized
--- to length equal to color intensity.
 randomSpike :: Float -> State StdGen (Float, Float)
 randomSpike length = liftM2 (,) (randomVal length) (randomVal length)
 
