@@ -7,7 +7,7 @@ import Plotter.HpglCommand
 import Control.Monad.State
 
 wndWidth  = 683 :: Int
-wndHeight = 768 :: Int
+wndHeight = 716 :: Int
 
 toF = fromIntegral
 
