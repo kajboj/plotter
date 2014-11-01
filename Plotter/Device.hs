@@ -83,7 +83,7 @@ main
      animation = do
        fileHandle <- initializeReader
        animateIO (InWindow "Plotter" (683, 768) (0, 0))
-                 black
+                 white
          (frame (getValue "global" "plotter")
                 (putValue "global" "plotter")
                 (getCommands fileHandle))
@@ -123,16 +123,16 @@ plotterPic plotter = Pictures [ spoolPic (left plotter)
 linePic :: [[Point]] -> Picture
 linePic lines_ = Pictures $ map renderLine lines_
   where
-    renderLine points = Color white (line points)
+    renderLine points = Color black (line points)
 
 spoolPic :: Spool -> Picture
 spoolPic spool = trans (point spool) (Rotate (angle spool) pic)
   where
-    pic = Pictures [ Color white (circle spoolRadius)
-                   , Color white (line [(0, 0), (spoolRadius, 0)]) ]
+    pic = Pictures [ Color black (circle spoolRadius)
+                   , Color black (line [(0, 0), (spoolRadius, 0)]) ]
 
 stringPic :: Point -> Point -> Picture
-stringPic (spoolX, spoolY) end = Color (greyN 0.4) (line [start, end])
+stringPic (spoolX, spoolY) end = Color (greyN 0.7) (line [start, end])
   where
     start = (spoolX, spoolY - spoolRadius)
 
@@ -140,7 +140,7 @@ trans :: Point -> Picture -> Picture
 trans (x, y) pic = Translate x y pic
 
 canvasPic :: Picture
-canvasPic = color (greyN 0.2) (rectangleWire width height)
+canvasPic = color (greyN 0.8) (rectangleWire width height)
   where
     width = x2-x1
     height = y2-y1
