@@ -1,4 +1,11 @@
-module Plotter.RasterDriver (drawPic, rowTraversal, Picture, Traversal) where
+module Plotter.RasterDriver ( drawPic
+                            , rowTraversal
+                            , randomWalk
+                            , randomStar
+                            , Picture
+                            , Traversal
+                            , PixelRenderer
+                            , Renderer) where
 import Plotter.HpglCommand
 import Data.List
 import System.Random
@@ -14,6 +21,8 @@ type Pixel = (Coords, Color)
 type Width = Int
 type Height = Int
 type Traversal = (Width, Height, [Pixel])
+type PixelRenderer = Pixel -> State StdGen [HPGLCommand]
+type Renderer = State StdGen [HPGLCommand]
 
 rowTraversal :: Picture -> Traversal
 rowTraversal pic =
@@ -23,16 +32,17 @@ rowTraversal pic =
       width = length $ head pic
   in (width, height, sequence)
 
-drawPic :: Traversal -> State StdGen [HPGLCommand]
-drawPic (width, height, pixels) = liftM applyEnvelope $ body pixels
+drawPic :: (Pixel -> Renderer) -> Traversal -> Renderer
+drawPic pixelRenderer (width, height, pixels) =
+  liftM applyEnvelope $ body pixelRenderer pixels
   where
     applyEnvelope body = pref ++ body ++ suffix
     pref = prefix width height
 
-body :: [Pixel] -> State StdGen [HPGLCommand]
-body pixels = liftM concat $ sequence $ map pix pixels
+body :: (Pixel -> Renderer) -> [Pixel] -> Renderer
+body pixelRenderer pixels = liftM concat $ sequence $ map pix pixels
   where
-    pix pixel@(point, color) = liftM (move point:) (randomWalk pixel)
+    pix pixel@(point, color) = liftM (move point:) (pixelRenderer pixel)
     move point = MV $ point
 
 randomStar :: Pixel -> State StdGen [HPGLCommand]

@@ -11,20 +11,25 @@ wndHeight = 716 :: Int
 
 toF = fromIntegral
 
+pixelRenderer :: String -> PixelRenderer
+pixelRenderer "--randomWalk" = randomWalk
+pixelRenderer "--randomStar" = randomStar
+
 main = do
   args <- getArgs
-  image <- parsePng (head args)
+  image <- parsePng (args !! 1)
   rndGen <- getStdGen
   let traversal@(width, height, _) = rowTraversal image
+      pixRenderer = pixelRenderer $ head args
     in display
       (InWindow "Raster graphics sim" (wndWidth, wndHeight) (0, 0))
       white
-      (glossPicture width height $ stripHpgl $ hpglPicture traversal rndGen)
+      (glossPicture width height $ stripHpgl $ hpglPicture pixRenderer traversal rndGen)
 
-hpglPicture :: Traversal -> StdGen -> [HPGLCommand]
-hpglPicture traversal rndGen = fst $ runState renderer rndGen
+hpglPicture :: RD.PixelRenderer -> Traversal -> StdGen -> [HPGLCommand]
+hpglPicture pixRenderer traversal rndGen = fst $ runState picRenderer rndGen
   where
-    renderer = drawPic traversal
+    picRenderer = drawPic pixRenderer traversal
 
 glossPicture :: Int -> Int -> [(Float, Float)] -> Gloss.Picture
 glossPicture width height points =
