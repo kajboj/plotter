@@ -11,10 +11,10 @@ import System.Serial
 commandWriter :: [Command] -> IO ()
 commandWriter commands = do
   pipeFd <- initializePipeWriter
-  --serialHandle <- initializeSerialWriter
-  putCommands pipeFd commands
+  serialHandle <- initializeSerialWriter
+  putCommands pipeFd serialHandle commands
   closeFd pipeFd
-  --hClose serialHandle
+  hClose serialHandle
 
 initializePipeWriter :: IO Fd
 initializePipeWriter = do
@@ -31,11 +31,12 @@ initializeSerialWriter = do
   putStrLn "done waiting"
   return handle
 
-putCommands :: Fd -> [Command] -> IO ()
-putCommands _ [] = return ()
-putCommands pipeFd (cmd:rest) = do
+putCommands :: Fd -> Handle -> [Command] -> IO ()
+putCommands _ _ [] = return ()
+putCommands pipeFd serialHandle (cmd:rest) = do
   putCommandToPipe pipeFd cmd
-  putCommands pipeFd rest
+  putCommandToSerial serialHandle cmd
+  putCommands pipeFd serialHandle rest
 
 putCommandToPipe :: Fd -> Command -> IO ()
 putCommandToPipe fd command = do
