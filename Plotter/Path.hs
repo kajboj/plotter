@@ -14,34 +14,37 @@ marks = L.cycle "abcdefghijklmnopqrstuvyz"
 
 path :: Dimensions -> StdGen -> [Coords]
 path dims@(width, height) rndGen =
-  reverse $ evalState (tree dims start []) allNodes
+  reverse $ evalState (tree dims start []) (rndGen, allNodes)
   where
     start = (0, 0)
     allNodes = S.fromList [(r, c) | r <- [0..height-1], c <- [0..width-1]]
 
-tree :: Dimensions -> Coords -> [Coords] -> State (S.Set Coords) [Coords]
+tree :: Dimensions -> Coords -> [Coords] -> State (StdGen, S.Set Coords) [Coords]
 tree dims node path = do
-  unvisited <- get
+  (rndGen, unvisited) <- get
   if node `S.member` unvisited
-    then put (S.delete node unvisited) >>
-      foldM visit (node:path) (neighbours dims node)
+    then do
+      neighs <- shuffle $ neighbours dims node
+      (rndGen, unvisited) <- get
+      put (rndGen, S.delete node unvisited)
+      foldM visit (node:path) neighs
     else return path
   where
     visit path n = tree dims n path
 
---shuffle :: [a] -> State (StdGen, (S.Set Coords)) [a]
---shuffle as = liftM (V.toList . foldr f v) $ rndIndexes $ length as
---  where
---    f i acc = let x = acc V.! i; y = acc V.! 0 in set i y (set 0 x acc)
---    v = V.fromList as
+shuffle :: [a] -> State (StdGen, (S.Set Coords)) [a]
+shuffle as = liftM (V.toList . foldr f v) $ rndIndexes $ length as
+  where
+    f i acc = let x = acc V.! i; y = acc V.! 0 in set i y (set 0 x acc)
+    v = V.fromList as
 
---rndIndexes :: Int -> State (StdGen, (S.Set Coords)) [Int]
---rndIndexes n = sequence $ replicate n randomInt
---  where
---    randomInt = do
---      (rndGen, coords) <- get
---      let (i, rndGen') = randomR (0, n- 1) rndGen
---        in put (rndGen', coords) >> return i
+rndIndexes :: Int -> State (StdGen, (S.Set Coords)) [Int]
+rndIndexes n = sequence $ replicate n randomInt
+  where
+    randomInt = do
+      (rndGen, coords) <- get
+      let (i, rndGen') = randomR (0, n- 1) rndGen
+        in put (rndGen', coords) >> return i
 
 unvisitedNeighbours :: Dimensions -> S.Set Coords -> Coords -> [Coords]
 unvisitedNeighbours dims unvisited coords =
