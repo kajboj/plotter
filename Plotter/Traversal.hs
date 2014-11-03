@@ -64,7 +64,7 @@ neighbours (w, h) (r, c) = filter onGrid [(r+ro, c+co) | (ro, co) <- offsets]
   where
     onGrid (r, c) = (r >= 0) && (r < h) && (c >= 0) && (c < w)
 
-offsets = [(-1,0),(0,-1),(0,1),(1,0)]
+offsets = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
 
 toString :: Dimensions -> [Coords] -> String
 toString dims path = (L.intercalate eol $ list) ++ eol
