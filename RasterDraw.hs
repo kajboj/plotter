@@ -13,13 +13,15 @@ wndHeight = 716 :: Int
 toF = fromIntegral
 
 pixelRenderer :: String -> PixelRenderer
-pixelRenderer "--randomWalk" = randomWalk
-pixelRenderer "--randomStar" = randomStar
+pixelRenderer "--walk" = randomWalk
+pixelRenderer "--star" = randomStar
+traversal rndGen "--random" = randomDeepTraversal rndGen
+traversal rndGen "--row"    = rowByRowTraversal
 
 main = do
   args <- getArgs
   rndGen <- getStdGen
-  picture@((width, height), _) <- parsePng (randomDeepTraversal rndGen) (args !! 1)
+  picture@((width, height), _) <- parsePng (traversal rndGen $ args !! 1) (args !! 2)
   let pixRenderer = pixelRenderer $ head args
     in display
       (InWindow "Raster graphics sim" (wndWidth, wndHeight) (0, 0))
