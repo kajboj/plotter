@@ -1,6 +1,7 @@
 import Graphics.Gloss as Gloss
 import Plotter.RasterDriver as RD
 import Plotter.PngParser
+import Plotter.Traversal
 import System.Environment
 import System.Random
 import Plotter.HpglCommand
@@ -17,19 +18,18 @@ pixelRenderer "--randomStar" = randomStar
 
 main = do
   args <- getArgs
-  image <- parsePng (args !! 1)
   rndGen <- getStdGen
-  let traversal@(width, height, _) = rowTraversal image
-      pixRenderer = pixelRenderer $ head args
+  picture@((width, height), _) <- parsePng (randomDeepTraversal rndGen) (args !! 1)
+  let pixRenderer = pixelRenderer $ head args
     in display
       (InWindow "Raster graphics sim" (wndWidth, wndHeight) (0, 0))
       white
-      (glossPicture width height $ stripHpgl $ hpglPicture pixRenderer traversal rndGen)
+      (glossPicture width height $ stripHpgl $ hpglPicture picture pixRenderer rndGen)
 
-hpglPicture :: RD.PixelRenderer -> Traversal -> StdGen -> [HPGLCommand]
-hpglPicture pixRenderer traversal rndGen = fst $ runState picRenderer rndGen
+hpglPicture :: RD.Picture -> RD.PixelRenderer -> StdGen -> [HPGLCommand]
+hpglPicture picture pixRenderer rndGen = fst $ runState picRenderer rndGen
   where
-    picRenderer = drawPic pixRenderer traversal
+    picRenderer = drawPic picture pixRenderer
 
 glossPicture :: Int -> Int -> [(Float, Float)] -> Gloss.Picture
 glossPicture width height points =

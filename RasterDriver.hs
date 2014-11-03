@@ -3,6 +3,7 @@ import Plotter.RasterDriver
 import Plotter.CommandWriter
 import Plotter.Shared
 import Plotter.PngParser
+import Plotter.Traversal
 import System.Environment
 import System.Random
 import Control.Monad.State
@@ -10,9 +11,9 @@ import Control.Monad.State
 main :: IO ()
 main = do
   args <- getArgs
-  image <- parsePng (head args)
+  picture <- parsePng rowByRowTraversal (head args)
   rndGen <- getStdGen
-  commandWriter $ commands (fst $ runState (drawPic randomWalk $ rowTraversal image) rndGen)
+  commandWriter $ commands (fst $ runState (drawPic picture randomWalk) rndGen)
   --commandWriter $ commands (fst $ runState (drawPic $ rowTraversal testImage) rndGen)
   where
     commands hpglCommands = hpglToCommands (x1, y1) (0, 0, 0, 0) hpglCommands

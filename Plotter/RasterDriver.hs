@@ -1,39 +1,28 @@
 module Plotter.RasterDriver ( drawPic
-                            , rowTraversal
                             , randomWalk
                             , randomStar
-                            , Picture
-                            , Traversal
                             , PixelRenderer
+                            , Picture
                             , Renderer) where
 import Plotter.HpglCommand
 import Data.List
 import System.Random
 import Control.Monad.State
 
-spikeCount = 6 :: Int
-toF = fromIntegral
-
 type Color = Float
-type Picture = [[Color]]
 type Coords = (Float, Float)
 type Pixel = (Coords, Color)
 type Width = Int
 type Height = Int
-type Traversal = (Width, Height, [Pixel])
+type Picture = ((Width, Height), [Pixel])
 type PixelRenderer = Pixel -> State StdGen [HPGLCommand]
 type Renderer = State StdGen [HPGLCommand]
 
-rowTraversal :: Picture -> Traversal
-rowTraversal pic =
-  let sequence = [((toF j, toF i), color) | (i, row) <- zipI pic, (j, color) <- dir i $ zipI row ]
-      dir rowIndex = if even rowIndex then id else reverse
-      height = length pic
-      width = length $ head pic
-  in (width, height, sequence)
+spikeCount = 6 :: Int
+toF = fromIntegral
 
-drawPic :: (Pixel -> Renderer) -> Traversal -> Renderer
-drawPic pixelRenderer (width, height, pixels) =
+drawPic :: Picture -> (Pixel -> Renderer) -> Renderer
+drawPic ((width, height), pixels) pixelRenderer  =
   liftM applyEnvelope $ body pixelRenderer pixels
   where
     applyEnvelope body = pref ++ body ++ suffix
@@ -77,6 +66,3 @@ prefix width height = [SC (0, toF height, 0, toF width), PD]
 
 suffix :: [HPGLCommand]
 suffix = [PU, MV (0, 0)]
-
-zipI :: [a] -> [(Int, a)]
-zipI = zip [0..]

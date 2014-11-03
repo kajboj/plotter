@@ -1,4 +1,4 @@
-module Plotter.Path where
+module Plotter.Traversal (rowByRowTraversal, randomDeepTraversal) where
 
 import qualified Data.Vector as V
 import qualified Data.List as L
@@ -12,8 +12,17 @@ type Dimensions = (Int, Int)
 
 marks = L.cycle "abcdefghijklmnopqrstuvyz"
 
-path :: Dimensions -> StdGen -> [Coords]
-path dims@(width, height) rndGen =
+rowByRowTraversal :: Dimensions -> [Coords]
+rowByRowTraversal (width, height) =
+  [(row, col) | row <- [0..height-1] , col <- dir row [0..width-1]]
+  where
+    dir row = if even row then id else reverse
+
+zipI :: [a] -> [(Int, a)]
+zipI = zip [0..]
+
+randomDeepTraversal :: StdGen -> Dimensions -> [Coords]
+randomDeepTraversal rndGen dims@(width, height) =
   reverse $ evalState (tree dims start []) (rndGen, allNodes)
   where
     start = (0, 0)
