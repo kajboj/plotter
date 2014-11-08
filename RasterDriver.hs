@@ -14,7 +14,6 @@ main = do
   rndGen <- getStdGen
   picture <- parsePng (randomDeepTraversal rndGen) (head args)
   commandWriter $ commands (fst $ runState (drawPic picture randomWalk) rndGen)
-  --commandWriter $ commands (fst $ runState (drawPic $ rowTraversal testImage) rndGen)
   where
     commands hpglCommands = hpglToCommands (x1, y1) (0, 0, 0, 0) hpglCommands
     (x1, x2, y1, y2) = bounds
