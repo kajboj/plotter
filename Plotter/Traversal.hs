@@ -3,6 +3,7 @@
 module Plotter.Traversal ( rowByRowTraversal
                          , randomDeepTraversal
                          , stepValue
+                         , countBacktracks
                          , TraversalGen
                          , Traversal
                          , Step (Forward, Backtrack)
@@ -37,6 +38,12 @@ rowByRowTraversal (width, height) =
 zipI :: [a] -> [(Int, a)]
 zipI = zip [0..]
 
+countBacktracks :: Traversal a -> Int
+countBacktracks xs = foldr (\x acc -> (count x) + acc) 0 xs
+  where
+    count (Backtrack _) = 1
+    count _             = 0
+
 randomDeepTraversal :: StdGen -> TraversalGen
 randomDeepTraversal rndGen dims@(width, height) =
   reverse $ evalState (tree dims start []) (rndGen, allNodes)
@@ -55,7 +62,6 @@ tree dims node trav = do
       else do
         (rndGen, unvisited) <- get
         neighs <- shuffle $ unvisitedNeighbours unvisited
-        put (rndGen, unvisited)
         foldM visit (Forward node:trav) neighs
     else return trav
   where
@@ -86,6 +92,8 @@ neighbours (w, h) (r, c) = filter onGrid [(r+ro, c+co) | (ro, co) <- offsets]
     onGrid (r, c) = (r >= 0) && (r < h) && (c >= 0) && (c < w)
 
 offsets = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
+-- offsets = [(-1,0),(0,-1),(0,1),(1,0)]
+-- offsets = [(-1,-1),(-1,1),(1,-1),(1,1)]
 
 toString :: Dimensions -> [Step Coords] -> String
 toString dims trav = (L.intercalate eol $ list) ++ eol

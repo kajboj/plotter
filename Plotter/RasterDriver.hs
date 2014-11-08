@@ -31,11 +31,15 @@ drawPic ((width, height), pixels) pixelRenderer  =
     pref = prefix width height
 
 body :: (Pixel -> Renderer) -> Traversal Pixel -> Renderer
-body pixelRenderer pixels = liftM concat $ sequence $ map pix pixels
+body pixelRenderer pixels = liftM concat $ sequence $ map pix $ withPrevious pixels
   where
-    pix step = liftM (move step ++) (pixelRenderer $ stepValue step)
-    move (Forward   (point, _)) = [MV $ point]
-    move (Backtrack (point, _)) = [PU, MV $ point, PD]
+    pix (prev, step) = liftM (move (prev, step) ++) (pixelRenderer $ stepValue step)
+    move (Forward _, step)   = [MV $ point $ stepValue step]
+    move (Backtrack _, step) = [PU, MV $ point $ stepValue step, PD]
+    point (point, _) = point
+
+withPrevious :: [a] -> [(a, a)]
+withPrevious xs = zip xs (tail xs)
 
 justADot :: Pixel -> State StdGen [HPGLCommand]
 justADot _ = return []

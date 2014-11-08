@@ -23,7 +23,8 @@ traversal rndGen "--row"    = rowByRowTraversal
 main = do
   args <- getArgs
   rndGen <- getStdGen
-  picture@((width, height), _) <- parsePng (traversal rndGen $ args !! 1) (args !! 2)
+  picture@((width, height), trav) <- parsePng (traversal rndGen $ args !! 1) (args !! 2)
+  putStrLn $ "backtracks (pen lifts) = " ++ (show $ countBacktracks trav)
   let pixRenderer = pixelRenderer $ head args
     in display
       (InWindow "Raster graphics sim" (wndWidth, wndHeight) (0, 0))
