@@ -1,10 +1,12 @@
 module Plotter.RasterDriver ( drawPic
                             , randomWalk
                             , randomStar
+                            , justADot
                             , PixelRenderer
                             , Picture
                             , Renderer) where
 import Plotter.HpglCommand
+import Plotter.Traversal (Traversal, stepValue, Step(Forward, Backtrack))
 import Data.List
 import System.Random
 import Control.Monad.State
@@ -14,7 +16,7 @@ type Coords = (Float, Float)
 type Pixel = (Coords, Color)
 type Width = Int
 type Height = Int
-type Picture = ((Width, Height), [Pixel])
+type Picture = ((Width, Height), Traversal Pixel)
 type PixelRenderer = Pixel -> State StdGen [HPGLCommand]
 type Renderer = State StdGen [HPGLCommand]
 
@@ -28,11 +30,15 @@ drawPic ((width, height), pixels) pixelRenderer  =
     applyEnvelope body = pref ++ body ++ suffix
     pref = prefix width height
 
-body :: (Pixel -> Renderer) -> [Pixel] -> Renderer
+body :: (Pixel -> Renderer) -> Traversal Pixel -> Renderer
 body pixelRenderer pixels = liftM concat $ sequence $ map pix pixels
   where
-    pix pixel@(point, color) = liftM (move point:) (pixelRenderer pixel)
-    move point = MV $ point
+    pix step = liftM (move step ++) (pixelRenderer $ stepValue step)
+    move (Forward   (point, _)) = [MV $ point]
+    move (Backtrack (point, _)) = [PU, MV $ point, PD]
+
+justADot :: Pixel -> State StdGen [HPGLCommand]
+justADot _ = return []
 
 randomStar :: Pixel -> State StdGen [HPGLCommand]
 randomStar ((x, y), color) = liftM (map MV) coords

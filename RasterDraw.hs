@@ -15,6 +15,7 @@ toF = fromIntegral
 pixelRenderer :: String -> PixelRenderer
 pixelRenderer "--walk" = randomWalk
 pixelRenderer "--star" = randomStar
+pixelRenderer "--dot" = justADot
 traversal rndGen "--random" = randomDeepTraversal rndGen
 traversal rndGen "--row"    = rowByRowTraversal
 

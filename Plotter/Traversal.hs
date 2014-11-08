@@ -1,45 +1,66 @@
-module Plotter.Traversal (rowByRowTraversal, randomDeepTraversal) where
+{-# LANGUAGE DeriveFunctor #-}
+
+module Plotter.Traversal ( rowByRowTraversal
+                         , randomDeepTraversal
+                         , stepValue
+                         , TraversalGen
+                         , Traversal
+                         , Step (Forward, Backtrack)
+                         ) where
 
 import qualified Data.Vector as V
 import qualified Data.List as L
 import qualified Data.Set as S
+import Data.Char
 import System.Random
 import Control.Monad.State
 
 type Grid a = V.Vector (V.Vector a)
 type Coords = (Int, Int)
 type Dimensions = (Int, Int)
+type TraversalGen = Dimensions -> Traversal Coords
+type Traversal a = [Step a]
+data Step a = Forward a | Backtrack a deriving (Show, Functor)
 
 marks = L.cycle "abcdefghijklmnopqrstuvyz"
 
-rowByRowTraversal :: Dimensions -> [Coords]
+stepValue :: Step a -> a
+stepValue (Forward   c) = c
+stepValue (Backtrack c) = c
+
+rowByRowTraversal :: TraversalGen
 rowByRowTraversal (width, height) =
-  [(row, col) | row <- [0..height-1] , col <- dir row [0..width-1]]
+  [Forward (row, col) | row <- [0..height-1] , col <- dir row [0..width-1]]
   where
     dir row = if even row then id else reverse
 
 zipI :: [a] -> [(Int, a)]
 zipI = zip [0..]
 
-randomDeepTraversal :: StdGen -> Dimensions -> [Coords]
+randomDeepTraversal :: StdGen -> TraversalGen
 randomDeepTraversal rndGen dims@(width, height) =
   reverse $ evalState (tree dims start []) (rndGen, allNodes)
   where
     start = (0, 0)
     allNodes = S.fromList [(r, c) | r <- [0..height-1], c <- [0..width-1]]
 
-tree :: Dimensions -> Coords -> [Coords] -> State (StdGen, S.Set Coords) [Coords]
-tree dims node path = do
+tree :: Dimensions -> Coords -> [Step Coords] -> State (StdGen, S.Set Coords) [Step Coords]
+tree dims node trav = do
   (rndGen, unvisited) <- get
   if node `S.member` unvisited
     then do
-      neighs <- shuffle $ neighbours dims node
-      (rndGen, unvisited) <- get
       put (rndGen, S.delete node unvisited)
-      foldM visit (node:path) neighs
-    else return path
+      if null $ unvisitedNeighbours unvisited
+      then return (Backtrack node:trav)
+      else do
+        (rndGen, unvisited) <- get
+        neighs <- shuffle $ unvisitedNeighbours unvisited
+        put (rndGen, unvisited)
+        foldM visit (Forward node:trav) neighs
+    else return trav
   where
-    visit path n = tree dims n path
+    unvisitedNeighbours unvisited = filter (`S.member` unvisited) $ neighbours dims node
+    visit trav neighbour = tree dims neighbour trav
 
 shuffle :: [a] -> State (StdGen, (S.Set Coords)) [a]
 shuffle as = liftM (V.toList . foldr f v) $ rndIndexes $ length as
@@ -66,16 +87,20 @@ neighbours (w, h) (r, c) = filter onGrid [(r+ro, c+co) | (ro, co) <- offsets]
 
 offsets = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
 
-toString :: Dimensions -> [Coords] -> String
-toString dims path = (L.intercalate eol $ list) ++ eol
+toString :: Dimensions -> [Step Coords] -> String
+toString dims trav = (L.intercalate eol $ list) ++ eol
   where 
-    list = V.toList $ V.map V.toList $ markPath dims (zip path marks)
+    list = toList2 $ markTrav dims (zip trav marks)
     eol = "\n"
 
-markPath :: Dimensions -> [((Int, Int), Char)] -> Grid Char
-markPath (width, height) = foldr mark (blank width height)
+markTrav :: Dimensions -> [(Step Coords, Char)] -> Grid Char
+markTrav (width, height) = foldr mark (blank width height)
   where
-    mark ((row, col), char) = set2 row col char
+    mark (Backtrack (row, col), char) = set2 row col (toUpper char)
+    mark (Forward (row, col), char)   = set2 row col char
+
+toList2 :: V.Vector (V.Vector a) -> [[a]]
+toList2 = V.toList . V.map V.toList
 
 set :: Int -> a -> V.Vector a -> V.Vector a
 set i e v = v V.// [(i, e)]

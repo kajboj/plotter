@@ -1,25 +1,26 @@
-module Plotter.PngParser (parsePng, testImage) where
+module Plotter.PngParser (parsePng, testImage, Picture) where
+
+import Plotter.Traversal (TraversalGen, Traversal)
 import Codec.Picture
 
 maxIntensity = 255 :: Float
 toF = fromIntegral
 
-type Traversal = ((Int, Int) -> [(Int, Int)])
-type Picture = ((Int, Int), [((Float, Float), Float)])
+type Picture = ((Int, Int), Traversal ((Float, Float), Float))
 
-parsePng :: Traversal -> String -> IO Picture
+parsePng :: TraversalGen -> String -> IO Picture
 parsePng traversal filepath = do
   ei <- readPng filepath
   case ei of
     Left err -> error err
     Right dynamicImage -> return $ process traversal dynamicImage
 
-process :: Traversal -> DynamicImage -> Picture
-process traversal (ImageRGB8 image) = (dimensions, map gray (traversal dimensions))
+process :: TraversalGen -> DynamicImage -> Picture
+process traversalGen (ImageRGB8 image) = (dimensions, map (fmap gray) (traversalGen dimensions))
   where
     dimensions@(width, height) = (imageWidth image, imageHeight image)
     gray (row, col) = case pixelAt image row (width - col - 1) of
-      PixelRGB8 r g b -> ((toF row, toF col), (avg r g b) / maxIntensity)
+                        PixelRGB8 r g b -> ((toF row, toF col), (avg r g b) / maxIntensity)
     avg a b c = (sum $ map fromIntegral [a, b, c]) / 3
 
 testImage :: [[Float]]
