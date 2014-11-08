@@ -11,8 +11,8 @@ import Control.Monad.State
 main :: IO ()
 main = do
   args <- getArgs
-  picture <- parsePng rowByRowTraversal (head args)
   rndGen <- getStdGen
+  picture <- parsePng (randomDeepTraversal rndGen) (head args)
   commandWriter $ commands (fst $ runState (drawPic picture randomWalk) rndGen)
   --commandWriter $ commands (fst $ runState (drawPic $ rowTraversal testImage) rndGen)
   where
