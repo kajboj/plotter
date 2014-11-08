@@ -56,7 +56,7 @@ randomSpike :: Float -> State StdGen (Float, Float)
 randomSpike length = liftM2 (,) (randomVal length) (randomVal length)
 
 randomVal :: Float -> State StdGen Float
-randomVal radius = do 
+randomVal radius = do
   rndGen <- get
   let (rndVal, rndGen') = randomR (-radius, radius) rndGen
   put rndGen'

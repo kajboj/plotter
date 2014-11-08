@@ -5,6 +5,7 @@ import Plotter.Traversal
 import System.Environment
 import System.Random
 import Plotter.HpglCommand
+import Plotter.HpglToLines
 import Control.Monad.State
 
 wndWidth  = 683 :: Int
@@ -27,24 +28,16 @@ main = do
     in display
       (InWindow "Raster graphics sim" (wndWidth, wndHeight) (0, 0))
       white
-      (glossPicture width height $ stripHpgl $ hpglPicture picture pixRenderer rndGen)
+      (glossPicture width height $ hpglToLines $ hpglPicture picture pixRenderer rndGen)
 
 hpglPicture :: RD.Picture -> RD.PixelRenderer -> StdGen -> [HPGLCommand]
 hpglPicture picture pixRenderer rndGen = fst $ runState picRenderer rndGen
   where
     picRenderer = drawPic picture pixRenderer
 
-glossPicture :: Int -> Int -> [(Float, Float)] -> Gloss.Picture
-glossPicture width height points =
-  zoom width height $ Color black (line points)
-
-stripHpgl :: [HPGLCommand] -> [(Float, Float)]
-stripHpgl hpgl = concat $ map strip hpgl
-  where
-    strip PD         = []
-    strip PU         = []
-    strip (SC _)     = []
-    strip (MV point) = [point]
+glossPicture :: Int -> Int -> [[(Float, Float)]] -> Gloss.Picture
+glossPicture width height lines =
+  zoom width height $ Gloss.Color black $ Pictures (map line lines)
 
 zoom :: Int -> Int -> Gloss.Picture -> Gloss.Picture
 zoom width height = Scale scale scale . Translate (-sW/2) (-sH/2)
