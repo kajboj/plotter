@@ -1,12 +1,13 @@
 module Plotter.HpglToLines (hpglToLines) where
 
 import Plotter.HpglCommand
+import Data.List
 
 data Pen = Up | Down deriving Show
 type Plotter = (Pen, (Float, Float))
 
 hpglToLines :: [HPGLCommand] -> [[(Float, Float)]]
-hpglToLines hpgl = snd $ foldl strip (initPlotter, []) hpgl
+hpglToLines hpgl = snd $ foldl' strip (initPlotter, []) hpgl
   where
     initPlotter = (Up, (0, 0))
 
