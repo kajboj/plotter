@@ -17,8 +17,11 @@ pixelRenderer :: String -> PixelRenderer
 pixelRenderer "--walk" = randomWalk
 pixelRenderer "--star" = randomStar
 pixelRenderer "--dot" = justADot
-traversal rndGen "--random" = randomDeepTraversal rndGen
-traversal rndGen "--row"    = rowByRowTraversal
+
+traversal :: StdGen -> String -> TraversalGen
+traversal rndGen "--random"   = randomDeepTraversal rndGen
+traversal rndGen "--row"      = rowByRowTraversal
+traversal rndGen "--diagonal" = diagonalTraversal
 
 main = do
   args <- getArgs

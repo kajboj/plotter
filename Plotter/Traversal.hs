@@ -2,6 +2,7 @@
 
 module Plotter.Traversal ( rowByRowTraversal
                          , randomDeepTraversal
+                         , diagonalTraversal
                          , stepValue
                          , countBacktracks
                          , TraversalGen
@@ -34,6 +35,25 @@ rowByRowTraversal (width, height) =
   [Forward (row, col) | row <- [0..height-1] , col <- dir row [0..width-1]]
   where
     dir row = if even row then id else reverse
+
+diagonalTraversal :: TraversalGen
+diagonalTraversal dims = next (0, 0)
+  where
+    next p = case findMove p (isLegal dims) (deltas p) of
+               Just p' -> (Forward p : next p')
+               Nothing -> [Forward p]
+    row (x, y) = x+y
+    deltas p = if even $ row p
+               then [(1, -1), (1, 0), (0, 1)]
+               else [(-1, 1), (0, 1), (1, 0)]
+
+isLegal :: Coords -> Coords -> Bool
+isLegal (width, height) (x, y) = (x>=0) && (x<=width-1) && (y>=0) && (y<=height-1)
+
+findMove :: Coords -> (Coords -> Bool) -> [Coords] -> Maybe Coords
+findMove p isLegal ds = L.find isLegal (map (add p) ds)
+  where
+    add (x, y) (dx, dy) = (x+dx, y+dy)
 
 zipI :: [a] -> [(Int, a)]
 zipI = zip [0..]
@@ -91,8 +111,8 @@ neighbours (w, h) (r, c) = filter onGrid [(r+ro, c+co) | (ro, co) <- offsets]
   where
     onGrid (r, c) = (r >= 0) && (r < h) && (c >= 0) && (c < w)
 
-offsets = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
--- offsets = [(-1,0),(0,-1),(0,1),(1,0)]
+-- offsets = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
+offsets = [(-1,0),(0,-1),(0,1),(1,0)]
 -- offsets = [(-1,-1),(-1,1),(1,-1),(1,1)]
 
 toString :: Dimensions -> [Step Coords] -> String
