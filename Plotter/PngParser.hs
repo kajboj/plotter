@@ -24,18 +24,7 @@ process traversalGen (ImageRGB8 image) = (dimensions, map (fmap gray) (traversal
     avg a b c = (sum $ map fromIntegral [a, b, c]) / 3
 
 testImage :: [[Float]]
-testImage = rotateClockwise [ [0.0, 1.0, 1.0, 1.0]
-                            , [1.0, 1.0, 1.0, 1.0]
-                            , [1.0, 1.0, 1.0, 1.0]
-                            , [1.0, 1.0, 1.0, 1.0]]
-
-
-rotateClockwise :: [[Float]] -> [[Float]]
-rotateClockwise = reverse . rotateAntiClockwise
-
-rotateAntiClockwise :: [[Float]] -> [[Float]]
-rotateAntiClockwise ([]:_) = []
-rotateAntiClockwise rows = (heads rows:(rotateAntiClockwise $ tails rows))
-  where
-    heads = map head
-    tails = map tail
+testImage = [ [0.0, 1.0, 1.0, 1.0]
+            , [1.0, 1.0, 1.0, 1.0]
+            , [1.0, 1.0, 1.0, 1.0]
+            , [1.0, 1.0, 1.0, 1.0]]
