@@ -2,6 +2,7 @@ module Plotter.RasterDriver ( drawPic
                             , randomWalk
                             , randomStar
                             , justADot
+                            , pixelRenderer
                             , PixelRenderer
                             , Picture
                             , Renderer) where
@@ -10,6 +11,11 @@ import Plotter.Traversal (Traversal, stepValue, Step(Forward, Backtrack))
 import Data.List
 import System.Random
 import Control.Monad.State
+
+pixelRenderer :: String -> PixelRenderer
+pixelRenderer "--walk" = randomWalk
+pixelRenderer "--star" = randomStar
+pixelRenderer "--dot" = justADot
 
 type Color = Float
 type Coords = (Float, Float)

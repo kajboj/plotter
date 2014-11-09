@@ -5,6 +5,7 @@ module Plotter.Traversal ( rowByRowTraversal
                          , diagonalTraversal
                          , stepValue
                          , countBacktracks
+                         , traversal
                          , TraversalGen
                          , Traversal
                          , Step (Forward, Backtrack)
@@ -16,6 +17,11 @@ import qualified Data.Set as S
 import Data.Char
 import System.Random
 import Control.Monad.State
+
+traversal :: StdGen -> String -> TraversalGen
+traversal rndGen "--random"   = randomDeepTraversal rndGen
+traversal rndGen "--row"      = rowByRowTraversal
+traversal rndGen "--diagonal" = diagonalTraversal
 
 type Grid a = V.Vector (V.Vector a)
 type Coords = (Int, Int)

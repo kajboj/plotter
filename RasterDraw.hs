@@ -13,22 +13,12 @@ wndHeight = 716 :: Int
 
 toF = fromIntegral
 
-pixelRenderer :: String -> PixelRenderer
-pixelRenderer "--walk" = randomWalk
-pixelRenderer "--star" = randomStar
-pixelRenderer "--dot" = justADot
-
-traversal :: StdGen -> String -> TraversalGen
-traversal rndGen "--random"   = randomDeepTraversal rndGen
-traversal rndGen "--row"      = rowByRowTraversal
-traversal rndGen "--diagonal" = diagonalTraversal
-
 main = do
   args <- getArgs
   rndGen <- getStdGen
   picture@((width, height), trav) <- parsePng (traversal rndGen $ args !! 1) (args !! 2)
   putStrLn $ "backtracks (pen lifts) = " ++ (show $ countBacktracks trav)
-  let pixRenderer = pixelRenderer $ head args
+  let pixRenderer = pixelRenderer $ (args !! 0)
     in display
       (InWindow "Raster graphics sim" (wndWidth, wndHeight) (0, 0))
       white

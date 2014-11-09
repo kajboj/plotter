@@ -12,8 +12,9 @@ main :: IO ()
 main = do
   args <- getArgs
   rndGen <- getStdGen
-  picture <- parsePng (randomDeepTraversal rndGen) (head args)
-  commandWriter $ commands (fst $ runState (drawPic picture randomWalk) rndGen)
+  picture <- parsePng (traversal rndGen $ args !! 1) (args !! 2)
+  let pixRenderer = (pixelRenderer (args !! 0))
+    in commandWriter $ commands (fst $ runState (drawPic picture pixRenderer) rndGen)
   where
     commands hpglCommands = hpglToCommands (x1, y1) (0, 0, 0, 0) hpglCommands
     (x1, x2, y1, y2) = bounds
