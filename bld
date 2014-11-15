@@ -2,7 +2,7 @@
 set -e
 
 rm -rf build/*
-ghc -outputdir build Device -o build/Device
-ghc -outputdir build Driver -o build/Driver
+ghc -outputdir build Device -rtsopts -o build/Device
+ghc -outputdir build Driver -rtsopts -o build/Driver
 ghc -outputdir build RasterDriver -rtsopts -o build/RasterDriver
 ghc -outputdir build RasterDraw -rtsopts -o build/RasterDraw
