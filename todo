@@ -1,0 +1,21 @@
+fix row/col swap in row by row traversal
+
+take another stab at command writer serial/pipe choice
+
+try introduce better piping between layers so we can do stuff like
+
+  PngParser png/x.png | RasterDriver | Driver | SimulatedDevice | RealDevice
+
+  cat hpgl/x.hpgl | HpglParser | Driver | SimulatedDevice | RealDevice
+
+  PngParser png/x.png | RasterDriver | RasterDraw
+
+  ---
+
+  Nothing       -> PngParser            -> Picture
+  Picture       -> RasterDriver         -> [HPGLCommand]
+  Picture       -> RasterDraw (SE)      -> Picture
+  [HPGLCommand] -> Driver               -> [Command]
+  [Command]     -> SimulatedDevice (SE) -> [Command]
+  [Command]     -> RealDevice           -> [Command]
+  hpgl string   -> HpglParser           -> [HpglCommand]
