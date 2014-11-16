@@ -1,7 +1,5 @@
 module Plotter.RealDevice (main) where
 
-import Plotter.Command
-import Plotter.CommandReader
 import Control.Concurrent
 import System.Posix.Terminal
 import System.IO
