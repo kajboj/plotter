@@ -22,5 +22,5 @@ outputChar handle char = do
   hPutChar handle char
   hFlush handle
   c <- hGetLine handle
-  hFlush handle
   putStrLn c
+  hFlush stdout
