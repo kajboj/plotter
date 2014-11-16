@@ -5,5 +5,5 @@ module Plotter.Command ( Step(L, R, N)
   
 import Data.Typeable
 
-data Step = L | R | N deriving (Eq, Show)
-data Command = PenDown | PenUp | Move (Step, Step) deriving (Show, Typeable)
+data Step = L | R | N deriving (Eq, Show, Read)
+data Command = PenDown | PenUp | Move (Step, Step) deriving (Show, Read, Typeable)
