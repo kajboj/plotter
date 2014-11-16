@@ -10,7 +10,13 @@ getCommands count = do
   eof <- isEOF
   if eof
     then return []
-    else (:) <$> (toCommand <$> getLine) <*> getCommands (count-1)
+    else (:) <$> readCommand <*> getCommands (count-1)
+
+readCommand :: IO Command
+readCommand = do
+  line <- getLine
+  putStrLn line
+  return $ toCommand line
 
 toCommand :: String -> Command
 toCommand s = case s of
