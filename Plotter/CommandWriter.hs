@@ -7,52 +7,15 @@ import System.Posix.Types
 import System.Posix.Terminal
 import System.IO
 import System.Serial
+import Control.Monad
 
 commandWriter :: [Command] -> IO ()
 commandWriter commands = do
-  pipeFd <- initializePipeWriter
-  serialHandle <- initializeSerialWriter
-  putCommands pipeFd serialHandle commands
-  closeFd pipeFd
-  hClose serialHandle
-
-initializePipeWriter :: IO Fd
-initializePipeWriter = do
-  fd <- openFd path WriteOnly Nothing defaultFileFlags
-  return fd
-  where
-    path = "input"
-
-initializeSerialWriter :: IO Handle
-initializeSerialWriter = do
-  handle <- openSerial "/dev/ttyACM0" B115200 8 One NoParity Software
-  putStrLn "waiting"
-  threadDelay 2000000
-  putStrLn "done waiting"
-  return handle
-
-putCommands :: Fd -> Handle -> [Command] -> IO ()
-putCommands _ _ [] = return ()
-putCommands pipeFd serialHandle (cmd:rest) = do
-  putCommandToPipe pipeFd cmd
-  putCommandToSerial serialHandle cmd
-  putCommands pipeFd serialHandle rest
-
-putCommandToPipe :: Fd -> Command -> IO ()
-putCommandToPipe fd command = do
-  fdWrite fd $ toString command
+  sequence $ map (putStrLn . toString) commands
   return ()
 
-putCommandToSerial :: Handle -> Command -> IO ()
-putCommandToSerial handle command = do
-  hPutChar handle $ toChar command
-  hFlush handle
-  c <- hGetLine handle
-  hFlush handle
-  putStrLn c
-
 toString :: Command -> String
-toString command = [toChar command] ++ "\n"
+toString command = [toChar command]
 
 toChar :: Command -> Char
 toChar command = case command of

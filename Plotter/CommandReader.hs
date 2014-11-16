@@ -1,37 +1,16 @@
-module Plotter.CommandReader (initializeReader, getCommands) where
+module Plotter.CommandReader (getCommands) where
 
 import Plotter.Command
-import System.Posix.Files
-import System.IO
 import Control.Applicative
+import System.IO
 
-initializeReader :: IO Handle
-initializeReader = do
-  fd <- openFile path ReadMode
-  hSetBuffering fd LineBuffering
-  return fd
-
-  where
-    path = "input"
-
-getCommands :: Handle -> IO [Command]
-getCommands = getCommands' 100
-  where
-    getCommands' 0 _ = return []
-    getCommands' n fd =
-      (:) <$> (getCommand fd) <*> (getCommands' (n-1) fd)
-
-getCommand :: Handle -> IO Command
-getCommand fd = do
-  isEof <- hIsEOF fd
-  if isEof
-    then do
-      --putStrLn "no input"
-      return $ Move (N, N)
-    else do
-      line <- hGetLine fd
-      --putStrLn line
-      return $ toCommand line
+getCommands :: Int -> IO [Command]
+getCommands 0 = return []
+getCommands count = do 
+  eof <- isEOF
+  if eof
+    then return []
+    else (:) <$> (toCommand <$> getLine) <*> getCommands (count-1)
 
 toCommand :: String -> Command
 toCommand s = case s of

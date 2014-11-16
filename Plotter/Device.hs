@@ -8,6 +8,7 @@ import Plotter.CommandReader
 import Graphics.Gloss
 import Graphics.Gloss.Interface.IO.Animate
 import System.IO.Storage
+import System.Environment
 import Data.Typeable
 
 
@@ -15,9 +16,7 @@ initialPosition = (x1, y1)
   where
     (x1, x2, y1, y2) = bounds
 
-inkDispersion = 0.008
-
-data Pen = Up | Down deriving (Show)
+data Pen = Up | Down deriving (Show, Read)
 
 data Spool = Spool { point :: Point
                    , string :: Float
@@ -76,17 +75,18 @@ nextSpool spool@(Spool point' string' angle' pullSign') step =
   where rotSign = rotationSign step
 
 main :: IO ()
-main 
- = do 
-   withStore "global" animation
+main
+ = do
+   commandsPerFrame <- return parseArgs <*> getArgs
+   withStore "global" $ (animation commandsPerFrame)
    where
-     animation = do
-       fileHandle <- initializeReader
+     parseArgs args = if null args then 1000 else read (args !! 0) :: Int
+     animation commandsPerFrame = do
        animateIO (InWindow "Plotter" (683, 768) (0, 0))
                  white
          (frame (getValue "global" "plotter")
                 (putValue "global" "plotter")
-                (getCommands fileHandle))
+                (getCommands commandsPerFrame))
 
 type Get a = IO (Maybe a)
 type Set a = a -> IO ()
