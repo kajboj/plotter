@@ -25,6 +25,13 @@ import Data.Typeable
 import Plotter.Command
 import Control.Applicative (Applicative, pure, (<*>), (<$>))
 
+degreesPerStep = (1/4076 * 360) :: Float
+spoolRadius = 25 :: Float
+leftSpoolPoint = (-455, 800)::MyPoint
+rightSpoolPoint = (455, 800)::MyPoint
+bounds = (-10, 10, -10, 10)::Bounds
+pullSigns = (-1, 1)::(Float, Float)
+
 type MyPoint = (Float, Float)
 type Bounds = (Float, Float, Float, Float)
 
@@ -42,13 +49,6 @@ instance Functor HPair where
 instance Applicative HPair where
   pure x = HPair (x, x)
   (<*>) (HPair (f, g)) (HPair (x, y)) = HPair (f x, g y)
-
-degreesPerStep = (1/4076 * 360) :: Float
-spoolRadius = 25 :: Float
-leftSpoolPoint = (-455, 800)::MyPoint
-rightSpoolPoint = (455, 800)::MyPoint
-bounds = (-180, 180, -150, 150)::Bounds
-pullSigns = (-1, 1)::(Float, Float)
 
 pullPerStep = (degreesPerStep / 360) * spoolCircumference
   where spoolCircumference = 2 * pi * spoolRadius
