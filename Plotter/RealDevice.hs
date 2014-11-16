@@ -3,8 +3,6 @@ module Plotter.RealDevice (main) where
 import Plotter.Command
 import Plotter.CommandReader
 import Control.Concurrent
-import System.Posix.IO
-import System.Posix.Types
 import System.Posix.Terminal
 import System.IO
 import System.Serial
