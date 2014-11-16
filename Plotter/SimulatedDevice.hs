@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
-module Plotter.Device (main) where
+module Plotter.SimulatedDevice (main) where
 
 import Plotter.Shared
 import Plotter.Command
