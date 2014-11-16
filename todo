@@ -17,5 +17,5 @@ try introduce better piping between layers so we can do stuff like
   Picture       -> RasterDraw (SE)      -> Picture
   [HPGLCommand] -> Driver               -> [Command]
   [Command]     -> SimulatedDevice (SE) -> [Command]
-  [Command]     -> RealDevice           -> [Command]
+  [Command]     -> RealDevice      (SE) -> [Command]
   hpgl string   -> HpglParser           -> [HpglCommand]
