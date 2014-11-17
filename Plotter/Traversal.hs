@@ -38,7 +38,7 @@ stepValue (Backtrack c) = c
 
 rowByRowTraversal :: TraversalGen
 rowByRowTraversal (width, height) =
-  [Forward (row, col) | row <- [0..height-1] , col <- dir row [0..width-1]]
+  [Forward (col, row) | row <- [0..height-1] , col <- dir row [0..width-1]]
   where
     dir row = if even row then id else reverse
 
