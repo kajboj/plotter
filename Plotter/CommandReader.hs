@@ -6,17 +6,20 @@ import System.IO
 
 getCommands :: Int -> IO [Command]
 getCommands 0 = return []
-getCommands count = do 
-  eof <- isEOF
-  if eof
-    then return []
-    else (:) <$> readCommand <*> getCommands (count-1)
+getCommands count = (:) <$> readCommand <*> getCommands (count-1)
 
 readCommand :: IO Command
 readCommand = do
-  line <- getLine
-  putStrLn line
-  return $ toCommand line
+  eof <- isEOF
+  if eof
+    then return nop
+    else do
+      line <- getLine
+      putStrLn line
+      return $ toCommand line
+
+nop :: Command
+nop = Move (N, N)
 
 toCommand :: String -> Command
 toCommand s = case s of
@@ -30,4 +33,4 @@ toCommand s = case s of
   "h" -> Move (R, L)
   "i" -> Move (L, L)
   "j" -> Move (R, R)
-  _   -> Move (N, N)
+  _   -> nop
