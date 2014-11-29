@@ -6,7 +6,7 @@ version:             0.1.0.0
 synopsis:            vertical plotter using Arduino
 
 -- A longer description of the package.
--- description:         
+-- description:
 
 license:             MIT
 
@@ -17,7 +17,7 @@ author:              Kai
 maintainer:          kajboj@gmail.com
 
 -- A copyright notice.
--- copyright:           
+-- copyright:
 
 category:            Graphics
 
@@ -38,17 +38,13 @@ executable driver
   build-depends: base        == 4.5.*
                , parsec      == 3.1.*
 
--- executable plotter
---   main-is:       Driver.hs
---   -- other-modules:
---   build-depends: base        == 4.5.*
---                , gloss       == 1.7.*
---                , random      == 1.1.*
---                , mtl         == 2.1.*
---                , io-storage  == 0.3.*
---                , unix        == 2.5.*
---                , serial      == 0.1.*
---                , vector      == 0.10.*
---                , containers  == 0.4.*
---                , JuicyPixels == 3.1.*
---                , parsec      == 3.1.*
+executable simulated_device
+  main-is:       SimulatedDevice.hs
+  other-modules: Plotter.Command
+               , Plotter.CommandReader
+               , Plotter.Shared
+               , Plotter.SimulatedDevice
+
+  build-depends: base        == 4.5.*
+               , gloss       == 1.7.*
+               , io-storage  == 0.3.*
