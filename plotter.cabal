@@ -51,11 +51,28 @@ executable simulated_device
 
 executable real_device
   main-is:       RealDevice.hs
-  other-modules: 
   build-depends: base        == 4.5.*
                , serial      == 0.1.*
                , unix        == 2.5.*
 
+executable raster_driver
+  main-is:       RasterDriver.hs
+
+  other-modules: Plotter.HpglCommand
+               , Plotter.Command 
+               , Plotter.Traversal
+               , Plotter.PngParser
+               , Plotter.Shared  
+               , Plotter.CommandWriter
+               , Plotter.RasterDriver
+               , Plotter.Driver  
+
+  build-depends: base        == 4.5.*
+               , mtl         == 2.1.*
+               , random      == 1.1.*
+               , containers  == 0.4.*
+               , vector      == 0.10.*
+               , JuicyPixels == 3.1.*
 
 --- executable plotter
 ---   main-is:       Driver.hs
