@@ -48,3 +48,26 @@ executable simulated_device
   build-depends: base        == 4.5.*
                , gloss       == 1.7.*
                , io-storage  == 0.3.*
+
+executable real_device
+  main-is:       RealDevice.hs
+  other-modules: 
+  build-depends: base        == 4.5.*
+               , serial      == 0.1.*
+               , unix        == 2.5.*
+
+
+--- executable plotter
+---   main-is:       Driver.hs
+---   -- other-modules:
+---   build-depends: base        == 4.5.*
+---                , gloss       == 1.7.*
+---                , random      == 1.1.*
+---                , mtl         == 2.1.*
+---                , io-storage  == 0.3.*
+---                , unix        == 2.5.*
+---                , serial      == 0.1.*
+---                , vector      == 0.10.*
+---                , containers  == 0.4.*
+---                , JuicyPixels == 3.1.*
+---                , parsec      == 3.1.*
