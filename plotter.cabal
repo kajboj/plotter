@@ -74,6 +74,8 @@ executable raster_driver
                , vector      == 0.10.*
                , JuicyPixels == 3.1.*
 
+  ghc-options:   "-with-rtsopts=-K256M" 
+
 executable raster_draw
   main-is:       RasterDraw.hs
 
@@ -90,3 +92,6 @@ executable raster_draw
                , vector      == 0.10.*
                , JuicyPixels == 3.1.*
                , gloss       == 1.7.*
+
+  ghc-options:   "-with-rtsopts=-K256M" 
+
