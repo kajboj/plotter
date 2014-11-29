@@ -1,9 +1,0 @@
-#!/bin/sh
-set -e
-
-rm -rf build/*
-ghc -outputdir build SimulatedDevice -rtsopts -o build/SimulatedDevice
-ghc -outputdir build RealDevice      -rtsopts -o build/RealDevice
-ghc -outputdir build Driver          -rtsopts -o build/Driver
-ghc -outputdir build RasterDriver    -rtsopts -o build/RasterDriver
-ghc -outputdir build RasterDraw      -rtsopts -o build/RasterDraw

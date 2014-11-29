@@ -74,17 +74,19 @@ executable raster_driver
                , vector      == 0.10.*
                , JuicyPixels == 3.1.*
 
---- executable plotter
----   main-is:       Driver.hs
----   -- other-modules:
----   build-depends: base        == 4.5.*
----                , gloss       == 1.7.*
----                , random      == 1.1.*
----                , mtl         == 2.1.*
----                , io-storage  == 0.3.*
----                , unix        == 2.5.*
----                , serial      == 0.1.*
----                , vector      == 0.10.*
----                , containers  == 0.4.*
----                , JuicyPixels == 3.1.*
----                , parsec      == 3.1.*
+executable raster_draw
+  main-is:       RasterDraw.hs
+
+  other-modules: Plotter.HpglCommand
+               , Plotter.HpglToLines
+               , Plotter.Traversal
+               , Plotter.PngParser
+               , Plotter.RasterDriver
+
+  build-depends: base        == 4.5.*
+               , mtl         == 2.1.*
+               , random      == 1.1.*
+               , containers  == 0.4.*
+               , vector      == 0.10.*
+               , JuicyPixels == 3.1.*
+               , gloss       == 1.7.*
