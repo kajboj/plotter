@@ -84,11 +84,11 @@ tree dims node trav = do
     then do
       put (rndGen, S.delete node unvisited)
       if null $ unvisitedNeighbours unvisited
-      then return (Backtrack node:trav)
-      else do
-        (rndGen, unvisited) <- get
-        neighs <- shuffle $ unvisitedNeighbours unvisited
-        foldM visit (Forward node:trav) neighs
+        then return (Backtrack node:trav)
+        else do
+          (rndGen, unvisited) <- get
+          neighs <- shuffle $ unvisitedNeighbours unvisited
+          foldM visit (Forward node:trav) neighs
     else return trav
   where
     unvisitedNeighbours unvisited = filter (`S.member` unvisited) $ neighbours dims node
