@@ -27,9 +27,9 @@ import Control.Applicative (Applicative, pure, (<*>), (<$>))
 
 degreesPerStep = (1/4076 * 360) :: Float
 spoolRadius = 25 :: Float
-leftSpoolPoint = (-455, 800)::MyPoint
-rightSpoolPoint = (455, 800)::MyPoint
-bounds = (-50, 50, -40, 40)::Bounds
+leftSpoolPoint = (-425, 800)::MyPoint
+rightSpoolPoint = (425, 800)::MyPoint
+bounds = (-160, 160, -125, 125)::Bounds
 pullSigns = (-1, 1)::(Float, Float)
 
 type MyPoint = (Float, Float)
