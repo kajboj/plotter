@@ -36,7 +36,8 @@ executable driver
                , Plotter.Driver
 
   build-depends: base        == 4.5.*
-               , parsec      == 3.1.*
+               , parsec
+               , bytestring  > 0.9.2.1
 
 executable simulated_device
   main-is:       SimulatedDevice.hs
@@ -46,14 +47,14 @@ executable simulated_device
                , Plotter.SimulatedDevice
 
   build-depends: base        == 4.5.*
-               , gloss       == 1.7.*
-               , io-storage  == 0.3.*
+               , gloss
+               , io-storage
 
 executable real_device
   main-is:       RealDevice.hs
-  build-depends: base        == 4.5.*
-               , serial      == 0.1.*
-               , unix        == 2.5.*
+  build-depends: base
+               , serial
+               , unix
 
 executable raster_driver
   main-is:       RasterDriver.hs
@@ -68,11 +69,11 @@ executable raster_driver
                , Plotter.Driver  
 
   build-depends: base        == 4.5.*
-               , mtl         == 2.1.*
-               , random      == 1.1.*
-               , containers  == 0.4.*
-               , vector      == 0.10.*
-               , JuicyPixels == 3.1.*
+               , mtl
+               , random
+               , containers
+               , vector
+               , JuicyPixels
 
   ghc-options:   "-with-rtsopts=-K256M" 
 
@@ -86,12 +87,12 @@ executable raster_draw
                , Plotter.RasterDriver
 
   build-depends: base        == 4.5.*
-               , mtl         == 2.1.*
-               , random      == 1.1.*
-               , containers  == 0.4.*
-               , vector      == 0.10.*
-               , JuicyPixels == 3.1.*
-               , gloss       == 1.7.*
+               , mtl
+               , random
+               , containers
+               , vector
+               , JuicyPixels
+               , gloss
 
   ghc-options:   "-with-rtsopts=-K256M" 
 
