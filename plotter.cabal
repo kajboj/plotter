@@ -93,5 +93,11 @@ executable raster_draw
                , JuicyPixels
                , gloss
 
-  ghc-options:   "-with-rtsopts=-K256M" 
+  ghc-options:   "-with-rtsopts=-K256M"
 
+executable to_hpgl
+  main-is:       ToHpgl.hs
+
+  -- other-modules: Plotter.HpglCommand
+
+  build-depends: base
