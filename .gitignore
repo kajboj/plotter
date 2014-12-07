@@ -4,3 +4,9 @@ Main
 *.o
 build
 dist
+.cabal-sandbox/
+cabal.sandbox.config
+*.command
+*.commands
+tmp
+tmp/
