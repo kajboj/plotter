@@ -1,6 +1,6 @@
 #define STEPS_PER_REV 4076
 #define STATE_COUNT 8
-#define WAIT 2
+#define WAIT 5
 #define PEN_UP_WAIT 500
 #define PEN_DOWN_WAIT 200
 
@@ -33,6 +33,25 @@ int states[STATE_COUNT][4] = {
   {HIGH, LOW,  LOW,  HIGH}
 };
 
+void pMode(int motor) {
+  pinMode(pins[motor][0], OUTPUT);
+  pinMode(pins[motor][1], OUTPUT);
+  pinMode(pins[motor][2], OUTPUT);
+  pinMode(pins[motor][3], OUTPUT);
+}
+
+void outputState(int motor, int *state) {
+  digitalWrite(pins[motor][0], state[0]);
+  digitalWrite(pins[motor][1], state[1]);
+  digitalWrite(pins[motor][2], state[2]);
+  digitalWrite(pins[motor][3], state[3]);
+}
+
+void outputMotorStateToPins() {
+  outputState(LEFT_MOTOR, states[motorStates[LEFT_MOTOR]]);
+  outputState(RIGHT_MOTOR, states[motorStates[RIGHT_MOTOR]]);
+}
+
 void setup() {
   Serial.begin(115200);
   pMode(LEFT_MOTOR);
@@ -44,25 +63,6 @@ void setup() {
   delay(1000);
 }
 
-void pMode(int motor) {
-  pinMode(pins[motor][0], OUTPUT);
-  pinMode(pins[motor][1], OUTPUT);
-  pinMode(pins[motor][2], OUTPUT);
-  pinMode(pins[motor][3], OUTPUT);
-}
-
-void outputMotorStateToPins() {
-  outputState(LEFT_MOTOR, states[motorStates[LEFT_MOTOR]]);
-  outputState(RIGHT_MOTOR, states[motorStates[RIGHT_MOTOR]]);
-}
-
-void outputState(int motor, int *state) {
-  digitalWrite(pins[motor][0], state[0]);
-  digitalWrite(pins[motor][1], state[1]);
-  digitalWrite(pins[motor][2], state[2]);
-  digitalWrite(pins[motor][3], state[3]);
-}
-
 void makeSteps(int count, void (*advanceLeftMotorState)(int), void (*advanceRightMotorState)(int)) {
   for (int i=0; i<count; i++) {
     advanceLeftMotorState(LEFT_MOTOR);
@@ -72,9 +72,6 @@ void makeSteps(int count, void (*advanceLeftMotorState)(int), void (*advanceRigh
   }
 }
 
-void motorLeft(int motor) { previous(motor); };
-void motorRight(int motor) { next(motor); };
-
 void next(int motor) {
   motorStates[motor] = (motorStates[motor] + 1) % STATE_COUNT;
 }
@@ -82,6 +79,9 @@ void next(int motor) {
 void previous(int motor) {
   motorStates[motor] = (motorStates[motor] - 1 + STATE_COUNT) % STATE_COUNT;
 }
+
+void motorLeft(int motor) { previous(motor); };
+void motorRight(int motor) { next(motor); };
 
 void stay(int motor) {}
 

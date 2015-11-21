@@ -10,3 +10,4 @@ cabal.sandbox.config
 *.commands
 tmp
 tmp/
+arduino/build-uno
