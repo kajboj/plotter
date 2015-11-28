@@ -1,6 +1,5 @@
-#define STEPS_PER_REV 4076
 #define STATE_COUNT 8
-#define WAIT 5
+#define WAIT 2
 #define PEN_UP_WAIT 500
 #define PEN_DOWN_WAIT 200
 
