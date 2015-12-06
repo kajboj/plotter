@@ -1,0 +1,2 @@
+#!/bin/sh
+pstoedit -f plot-hpgl $1 $2
